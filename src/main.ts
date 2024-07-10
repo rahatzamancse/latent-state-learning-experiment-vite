@@ -9,8 +9,7 @@ import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response'
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
 
-import { shuffleIndices, readFile } from './utils';
-import { generateCircularStimuli } from './generate-stimuli';
+import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
 
