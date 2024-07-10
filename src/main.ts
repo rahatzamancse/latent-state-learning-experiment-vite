@@ -2,7 +2,7 @@ import { initJsPsych } from 'jspsych';
 import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
 import jsPsychWebgazerCalibrate from '@jspsych/plugin-webgazer-calibrate';
-import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
+// import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
 import { UAParser } from 'ua-parser-js'; 
 import jsPsychPreload from '@jspsych/plugin-preload';
 import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
@@ -90,12 +90,12 @@ if (TRACK_EYE) {
         calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
         calibration_mode: 'click'
     })
-    timeline.push({
-        type: jsPsychWebgazerValidate,
-        validation_points: [[-300,300], [300,300],[-300,-300],[300,-300]],
-        validation_point_coordinates: 'center-offset-pixels',
-        roi_radius: 100
-    })
+    // timeline.push({
+    //     type: jsPsychWebgazerValidate,
+    //     validation_points: [[-300,300], [300,300],[-300,-300],[300,-300]],
+    //     validation_point_coordinates: 'center-offset-pixels',
+    //     roi_radius: 100
+    // })
 }
 
 // Welcome screen
