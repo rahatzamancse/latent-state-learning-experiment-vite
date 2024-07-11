@@ -473,7 +473,7 @@ timeline.push({
     func: function (done: (ref_id: any) => void) {
         const trials = JSON.parse(jsPsych.data.get().json());
         console.log(trials);
-        const docRef = addDoc(collection(db, "experiments"), {
+        addDoc(collection(db, "experiments"), {
             trials,
         }).catch(e => { console.error("Error storing Data: ", e) }
         ).then(docRef => {
