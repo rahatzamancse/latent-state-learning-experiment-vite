@@ -72,8 +72,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     }
     // create the draggable element
     container.innerHTML += `<div class="wrapper" style="display: inline-grid; grid-template-rows: 1fr; grid-template-columns: 1fr; background-color: white;">
-      <div id="jspsych-dragndrop-element" class="jspsych-dragndrop-element" style="transform: scale(0.5); transform-origin: 0 0;">
-        ${trial.element}
+      <div id="jspsych-dragndrop-element" class="jspsych-dragndrop-element" style="transform: scale(1); transform-origin: 0 0;">
+        <img src="${trial.element}" width="100%"/>
       </div>
     </div>
     `;

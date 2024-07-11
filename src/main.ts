@@ -16,6 +16,7 @@ import jsPsychCallFunction from '@jspsych/plugin-call-function';
 import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
+// import jsPsychPlayAudio from './extension-play-audio';
 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -33,15 +34,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const TRACK_EYE = true;
+const TRACK_EYE = false;
 
-const jsPsych = initJsPsych({
-    extensions: TRACK_EYE ? [{
+const extensions = [];
+if (TRACK_EYE) {
+    extensions.push({
         type: jsPsychExtensionWebgazer,
         params: {
-            auto_initialize: true,
+            auto_initialize: false,
         }
-    }] : [],
+    });
+}
+// extensions.push({
+//     type: jsPsychPlayAudio,
+// })
+const jsPsych = initJsPsych({
+    extensions: extensions,
     on_finish: async () => {
         jsPsych.data.get().localSave('json', 'data.json');
     }
@@ -58,19 +66,34 @@ timeline.push({
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
         ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
     ],
-    audio: [],
+    audio: ['audio/intro.mp3'],
     video: [],
 });
 
 
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Welcome to the psychiatric experiment!</h1><p>Press any key to continue.</p>`,
+})
 
 timeline.push({
     type: jsPsychInstructions,
     pages: [
         `<h1>Experiment</h1>
-<p>In this experiment, you will play a small treasure sorting game. During the playing, your activity and eye movement will be recorded. However, your video will not be recorded. In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
+<p>In this experiment, you will play a small treasure sorting game.</p>
+<p>During the playing, your activity and eye movement will be recorded. However, your video will not be recorded.</p>
+<p>In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
     ],
-    show_clickable_nav: true
+    show_clickable_nav: true,
+    // extensions: [
+    //     {
+    //         type: jsPsychPlayAudio,
+    //         params: {
+    //             audio_path: 'audio/intro.mp3',
+    //         }
+    //     }
+    
+    // ]
 });
 
 
@@ -78,7 +101,7 @@ timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Fullscreen</h1>
 <p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>
-<p>Press any key to fullscreen and continue to camera calibration.</p>`
+<p>Press any key to fullscreen and continue to camera calibration.</p>`,
 })
 // Switch to fullscreen
 timeline.push({
@@ -206,9 +229,12 @@ const rewards = {
     incorrect: "images/reward/nodiamond.png",
 }
 
+const STIMULI_SIZE = 0.5;
+// const BUCKET_SIZE = 200;
+
 timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<img src="${context1_stimulus[0].image}" width="500px" />
+    stimulus: `<img src="${context1_stimulus[0].image}" width="${STIMULI_SIZE*100}%" />
 <p>This is a treasure. Each treasure has 5 features at 5 corners.</p>
 <p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>
 <p>Press the button below to assign the name of the treasure.</p>`,
@@ -240,7 +266,7 @@ function unnestDragData(data: any) {
 
 const firstTrial = {
     type: jsPsychDragndrop,
-    element: `<img src="${context1_stimulus[0].image}" width="500px" />`,
+    element: context1_stimulus[0].image,
     show_labels: true,
     buckets: BASKETS.map(b => b.image),
     bucket_labels: BASKETS.map(b => b.name),
@@ -316,7 +342,7 @@ const showStimuli = {
     type: jsPsychHtmlButtonResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
     choices: () => treasure_names.slice(0, currentAssignedTreasure + 1).concat("Assign new treasure state"),
-    prompt: "Please assign the state of the treasure",
+    prompt: "",
     on_finish: function (data: any) {
         if (data.response <= currentAssignedTreasure) {
             data.estimated_state = treasure_names[data.response];
@@ -345,7 +371,7 @@ const showStimuli = {
 }
 const actionSelection = {
     type: jsPsychDragndrop,
-    element: jsPsych.timelineVariable('stimuli'),
+    element: jsPsych.timelineVariable('stimuli_path'),
     buckets: BASKETS.map(b => b.image),
     show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
@@ -386,7 +412,11 @@ const context1Procedure = {
         rewardTrial,
     ],
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
-        { stimuli: `<img src="${context1_stimulus[i].image}" width="500px" />`, correct_bucket_index: context1_stimulus[i].correct_action }
+        {
+            stimuli: `<img src="${context1_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+            correct_bucket_index: context1_stimulus[i].correct_action,
+            stimuli_path: context1_stimulus[i].image
+        }
     )),
     randomize_order: true,
     repetitions: 1,
@@ -411,7 +441,11 @@ const context2Procedure = {
         rewardTrial,
     ],
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
-        { stimuli: `<img src="${context2_stimulus[i].image}" width="500px" />`, correct_bucket_index: context2_stimulus[i].correct_action }
+        {
+            stimuli: `<img src="${context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+            correct_bucket_index: context2_stimulus[i].correct_action,
+            stimuli_path: context2_stimulus[i].image
+        }
     )),
     randomize_order: true,
     repetitions: 1,
@@ -438,7 +472,11 @@ const context3Procedure = {
         rewardTrial,
     ],
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
-        { stimuli: `<img src="${context3_stimulus[i].image}" width="500px" />`, correct_bucket_index: context3_stimulus[i].correct_action }
+        {
+            stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE*100}%" />`,
+            correct_bucket_index: context3_stimulus[i].correct_action,
+            stimuli_path: context3_stimulus[i].image
+        }
     )),
     randomize_order: true,
     repetitions: 1,
