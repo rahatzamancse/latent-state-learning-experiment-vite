@@ -3,18 +3,37 @@ import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
 import jsPsychWebgazerCalibrate from '@jspsych/plugin-webgazer-calibrate';
 // import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
-import { UAParser } from 'ua-parser-js'; 
 import jsPsychPreload from '@jspsych/plugin-preload';
 import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
+import jsPsychInstructions from '@jspsych/plugin-instructions';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
+import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
 import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
+import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
+import jsPsychCallFunction from '@jspsych/plugin-call-function';
+
 
 import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
 
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore"; 
+
+const firebaseConfig = {
+    apiKey: "AIzaSyC6C0XcUlxzCv8_xXJlyBli55cDAbG16-s",
+    authDomain: "latent-state-learning.firebaseapp.com",
+    projectId: "latent-state-learning",
+    storageBucket: "latent-state-learning.appspot.com",
+    messagingSenderId: "926544010648",
+    appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const TRACK_EYE = true;
-// const USE_PAVLOVIA = false;
 
 const jsPsych = initJsPsych({
     extensions: TRACK_EYE ? [{
@@ -23,29 +42,13 @@ const jsPsych = initJsPsych({
             auto_initialize: true,
         }
     }] : [],
-    on_finish: function () {
+    on_finish: async () => {
         jsPsych.data.get().localSave('json', 'data.json');
     }
-});
-/* BROWSER-CHECK */
-const parser = new UAParser();
-const browser = parser.getBrowser();
-const os = parser.getOS();
-
-jsPsych.data.addProperties({
-    parser: parser,
-    browser: browser,
-    os: os,
 });
 
 
 const timeline = [];
-/* init connection with pavlovia.org */
-// if(USE_PAVLOVIA)
-//     timeline.push({
-//         type: jsPsychPavlovia,
-//         command: "init"
-//     });
 
 // Preload assets
 timeline.push({
@@ -60,12 +63,16 @@ timeline.push({
 });
 
 
+
 timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>Experiment</h1>
-<p>In this experiment, you will play a small treasure sorting game. During the playing, your activity and eye movement will be recorded. However, your video will not be recorded. In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>
-<p>Press any key to go next.</p>`
+    type: jsPsychInstructions,
+    pages: [
+        `<h1>Experiment</h1>
+<p>In this experiment, you will play a small treasure sorting game. During the playing, your activity and eye movement will be recorded. However, your video will not be recorded. In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
+    ],
+    show_clickable_nav: true
 });
+
 
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
@@ -79,16 +86,53 @@ timeline.push({
     fullscreen_mode: true,
 });
 
+timeline.push({
+    type: jsPsychBrowserCheck,
+    minimum_width: 1000,
+    minimum_height: 600,
+    inclusion_function: (data: any) => {
+        return data.mobile === false && data.webcam === true
+    },
+    exclusion_message: (data: any) => {
+        if (data.mobile) {
+            return '<p>You must use a desktop/laptop computer to participate in this experiment.</p>';
+        } else if (!data.webcam) {
+            return '<p>You must have an active webcam for this experiment. Make sure to allow your browser to access your camera at the beginning of the experiment.</p>'
+        } else if (data.width < 1000 || data.height < 600) {
+            return '<p>Your screen is too small to participate in this experiment. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
+        }
+    }
+})
+
+
 // initialize eye tracking
 if (TRACK_EYE) {
     timeline.push({
+        type: jsPsychHtmlKeyboardResponse,
+        trial_duration: 2000,
+        stimulus: `<h1>Reminder: No video will be recorded in this session. </h1>`
+    })
+
+    timeline.push({
         type: jsPsychWebgazerInitCamera,
+    })
+    
+    timeline.push({
+        type: jsPsychInstructions,
+        pages: [
+        `<h1>Camera Calibration</h1>
+        <p>Before we start the experiment, we need to calibrate your camera. Please follow the instructions carefully.</p>`,
+        `<h1>Camera Calibration</h1>
+        <p>During the calibration, you will see a few dots on the screen. Please look at the dots as they appear. Then you need to click them with your mouse.</p>`,
+        ],
+        show_clickable_nav: true
     })
 
     timeline.push({
         type: jsPsychWebgazerCalibrate,
         calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
-        calibration_mode: 'click'
+        calibration_mode: 'click',
+        randomize_calibration_order: true,
     })
     // timeline.push({
     //     type: jsPsychWebgazerValidate,
@@ -100,18 +144,15 @@ if (TRACK_EYE) {
 
 // Welcome screen
 timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>The Lost Treasures of Colorland</h1>
-<p>Welcome to Colorland, a vibrant kingdom where every shape, color, and pattern contributes to its enchanting festivals. This year, a whirlwind has mixed up all the decorations needed for the grand Festival of Patterns. Without these decorations in their right places, the festival cannot start.</p>
-<p>Press any key to go next.</p>`
-});
-
-// Instructions 1
-timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<p>To save the Festival of Patterns, we need your special skills. We have four magical buckets, each dedicated to collecting specific types of festival decorations</p>
-<p>Here’s how you can help: We will show you one special decoration at a time. For the first item, we'll tell you exactly which bucket it belongs to. If you place it correctly, a magical reward will appear! For the other items, we won't tell you their buckets, but if you remember the clues and use your best judgment, you’ll earn more rewards each time you choose correctly.</p>`,
-});
+    type: jsPsychInstructions,
+    pages: [
+        `<h1>The Lost Treasures of Colorland</h1>
+<p>Welcome to Colorland, a vibrant kingdom where every shape, color, and pattern contributes to its enchanting festivals. This year, a whirlwind has mixed up all the decorations needed for the grand Festival of Patterns. Without these decorations in their right places, the festival cannot start.</p>`,
+        `<p>To save the Festival of Patterns, we need your special skills. We have four magical buckets, each dedicated to collecting specific types of festival decorations</p>
+<p>Here’s how you can help: We will show you one special decoration at a time. For the first item, we'll tell you exactly which bucket it belongs to. If you place it correctly, a magical reward will appear! For the other items, we won't tell you their buckets, but if you remember the clues and use your best judgment, you’ll earn more rewards each time you choose correctly.</p>`
+    ],
+    show_clickable_nav: true
+})
 
 const treasure_names = ['Quixot', 'Wyvern', 'Eronimo', 'Rochar', 'Tynix', 'Yrton', 'Urono', 'Izor', 'Oronim', 'Pexis', 'Arctis', 'Syber', 'Dynax', 'Fyxis', 'Gyron', 'Hyxel', 'Jaltra', 'Kavra', 'Lyris'];
 
@@ -169,7 +210,8 @@ timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `<img src="${context1_stimulus[0].image}" width="500px" />
 <p>This is a treasure. Each treasure has 5 features at 5 corners.</p>
-<p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>`,
+<p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>
+<p>Press the button below to assign the name of the treasure.</p>`,
     choices: [treasure_names[0]],
     extensions: TRACK_EYE ? [
         {
@@ -184,8 +226,18 @@ timeline.push({
                 ],
             }
         }
-    ] : []
+    ] : [],
+    data: { tutorial: true },
 });
+
+function unnestDragData(data: any) {
+    const drag_data_obj: { [key: number]: {x: number, y: number, t: number}} = {};
+    data.drag_data.forEach((d: any, i: number) => {
+        drag_data_obj[i] = d;
+    });
+    data.drag_data = drag_data_obj;
+}
+
 const firstTrial = {
     type: jsPsychDragndrop,
     element: `<img src="${context1_stimulus[0].image}" width="500px" />`,
@@ -208,7 +260,9 @@ const firstTrial = {
                 ],
             }
         }
-    ] : []
+    ] : [],
+    on_finish: unnestDragData,
+    data: { tutorial: true },
 };
 
 function getOutcome() {
@@ -312,6 +366,7 @@ const actionSelection = {
             }
         }
     ] : [],
+    on_finish: unnestDragData
 }
 
 const firstLoop = {
@@ -390,17 +445,45 @@ const context3Procedure = {
 }
 timeline.push(context3Procedure);
 
-// TODO: Which of these treasure types do you think are real?
-// TODO: Which of these treasure types do you think are made up?
-// TODO: For treasure "...", which bucket do you think it should go to?
 
-/* finish connection with pavlovia.org */
-// if(USE_PAVLOVIA)
-//     timeline.push({
-//         type: jsPsychPavlovia,
-//         command: "finish",
-//         participantId: "test"
-//     });
+timeline.push({
+    type: jsPsychSurveyMultiChoice,
+    questions: [
+        {
+            prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? ",
+            name: 'realTreasures',
+            options: () => treasure_names.slice(0, currentAssignedTreasure + 1),
+            required: true,
+            horizontal: true
+        },
+        {
+            prompt: "And which of the treasures are made up? They should be named as the same as the treasures you think are real.",
+            name: 'madeupTreasures',
+            options: () => treasure_names.slice(0, currentAssignedTreasure + 1),
+            required: true,
+            horizontal: true
+        }
+    ],
+})
+
+
+timeline.push({
+    type: jsPsychCallFunction,
+    async: true,
+    func: function (done: (ref_id: any) => void) {
+        const trials = JSON.parse(jsPsych.data.get().json());
+        console.log(trials);
+        const docRef = addDoc(collection(db, "experiments"), {
+            trials,
+        }).catch(e => { console.error("Error storing Data: ", e) }
+        ).then(docRef => {
+            if(docRef) {
+                console.log("Document written with ID: ", docRef.id);
+                done(docRef.id)
+            }
+        });
+    }
+})
 
 // outro
 timeline.push({

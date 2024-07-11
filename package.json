@@ -15,15 +15,18 @@
   },
   "dependencies": {
     "@jspsych/extension-webgazer": "^1.0.3",
+    "@jspsych/plugin-browser-check": "^1.0.3",
+    "@jspsych/plugin-call-function": "^1.1.3",
     "@jspsych/plugin-fullscreen": "^1.2.1",
     "@jspsych/plugin-html-button-response": "^1.2.0",
     "@jspsych/plugin-html-keyboard-response": "^1.1.3",
+    "@jspsych/plugin-instructions": "^1.1.4",
     "@jspsych/plugin-preload": "^1.1.3",
+    "@jspsych/plugin-survey-multi-choice": "^1.1.3",
     "@jspsych/plugin-webgazer-calibrate": "^1.0.3",
     "@jspsych/plugin-webgazer-init-camera": "^1.0.3",
     "@jspsych/plugin-webgazer-validate": "^1.0.3",
-    "jspsych": "^7.3.4",
-    "ua-parser-js": "^1.0.38",
-    "webgazer": "^3.3.0"
+    "firebase": "^10.12.3",
+    "jspsych": "^7.3.4"
   }
 }

@@ -204,6 +204,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
             drag_data: allDragData,
             drop_bucket: droppedInBucketIndex,
             is_correct: droppedInBucketIndex === trial.correct_bucket_index,
+            buckets: trial.buckets,
           };
           jsPsych.finishTrial(trial_data);
         }
