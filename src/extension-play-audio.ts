@@ -39,9 +39,6 @@ class PlayAudioExtension implements JsPsychExtension {
     console.log("on_load")
     const context = this.jsPsych.pluginAPI.audioContext();
 
-    // record webaudio context start time
-    var startTime;
-
     // load audio file
     this.jsPsych.pluginAPI
       .getAudioBuffer(audio_path)
