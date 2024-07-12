@@ -10,17 +10,14 @@ import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
 import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
-import jsPsychCallFunction from '@jspsych/plugin-call-function';
+// import jsPsychCallFunction from '@jspsych/plugin-call-function';
 
 
 import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
 // import jsPsychPlayAudio from './extension-play-audio';
-
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { collection, addDoc } from "firebase/firestore"; 
+import jsPsychFirestore from './extension-firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyC6C0XcUlxzCv8_xXJlyBli55cDAbG16-s",
@@ -31,10 +28,8 @@ const firebaseConfig = {
     appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
-const TRACK_EYE = false;
+const TRACK_EYE = true;
 
 const extensions = [];
 if (TRACK_EYE) {
@@ -48,10 +43,23 @@ if (TRACK_EYE) {
 // extensions.push({
 //     type: jsPsychPlayAudio,
 // })
+const FirebaseExtension = { type: jsPsychFirestore }
+extensions.push({
+    type: jsPsychFirestore,
+    params: {
+        firebaseConfig,
+    }
+})
 const jsPsych = initJsPsych({
     extensions: extensions,
-    on_finish: async () => {
+    on_data_update: (data: any) => {
+        console.log("Data Updated: ", data);
+    },
+    on_finish: () => {
         jsPsych.data.get().localSave('json', 'data.json');
+    },
+    on_trial_finish: (trial: any) => {
+        console.log("Called on finish trial");
     }
 });
 
@@ -68,6 +76,7 @@ timeline.push({
     ],
     audio: ['audio/intro.mp3'],
     video: [],
+    extensions: [ FirebaseExtension ]
 });
 
 
@@ -92,7 +101,6 @@ timeline.push({
     //             audio_path: 'audio/intro.mp3',
     //         }
     //     }
-    
     // ]
 });
 
@@ -124,7 +132,8 @@ timeline.push({
         } else if (data.width < 1000 || data.height < 600) {
             return '<p>Your screen is too small to participate in this experiment. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
         }
-    }
+    },
+    extensions: [ FirebaseExtension ]
 })
 
 
@@ -161,7 +170,8 @@ if (TRACK_EYE) {
     //     type: jsPsychWebgazerValidate,
     //     validation_points: [[-300,300], [300,300],[-300,-300],[300,-300]],
     //     validation_point_coordinates: 'center-offset-pixels',
-    //     roi_radius: 100
+    //     roi_radius: 100,
+    //     extensions: [ FirebaseExtension ]
     // })
 }
 
@@ -251,9 +261,14 @@ timeline.push({
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
-    ] : [],
+        },
+        FirebaseExtension
+    ] : [FirebaseExtension],
     data: { tutorial: true },
+    on_finish: (data: any) => {
+        console.log("on_finish called from Trial: ", data);
+        jsPsych.finishTrial();
+    }
 });
 
 function unnestDragData(data: any) {
@@ -285,8 +300,9 @@ const firstTrial = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
-    ] : [],
+        },
+        FirebaseExtension
+    ] : [FirebaseExtension],
     on_finish: unnestDragData,
     data: { tutorial: true },
 };
@@ -366,8 +382,9 @@ const showStimuli = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
-    ] : [],
+        },
+        FirebaseExtension
+    ] : [FirebaseExtension],
 }
 const actionSelection = {
     type: jsPsychDragndrop,
@@ -390,8 +407,9 @@ const actionSelection = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
-    ] : [],
+        },
+        FirebaseExtension
+    ] : [FirebaseExtension],
     on_finish: unnestDragData
 }
 
@@ -502,26 +520,27 @@ timeline.push({
             horizontal: true
         }
     ],
+    extensions: [ FirebaseExtension ]
 })
 
 
-timeline.push({
-    type: jsPsychCallFunction,
-    async: true,
-    func: function (done: (ref_id: any) => void) {
-        const trials = JSON.parse(jsPsych.data.get().json());
-        console.log(trials);
-        addDoc(collection(db, "experiments"), {
-            trials,
-        }).catch(e => { console.error("Error storing Data: ", e) }
-        ).then(docRef => {
-            if(docRef) {
-                console.log("Document written with ID: ", docRef.id);
-                done(docRef.id)
-            }
-        });
-    }
-})
+// timeline.push({
+//     type: jsPsychCallFunction,
+//     async: true,
+//     func: function (done: (ref_id: any) => void) {
+//         const trials = JSON.parse(jsPsych.data.get().json());
+//         console.log(trials);
+//         addDoc(collection(db, "experiments"), {
+//             trials,
+//         }).catch(e => { console.error("Error storing Data: ", e) }
+//         ).then(docRef => {
+//             if(docRef) {
+//                 console.log("Document written with ID: ", docRef.id);
+//                 done(docRef.id)
+//             }
+//         });
+//     }
+// })
 
 // outro
 timeline.push({

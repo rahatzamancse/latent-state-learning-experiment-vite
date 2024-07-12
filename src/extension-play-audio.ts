@@ -26,14 +26,14 @@ class PlayAudioExtension implements JsPsychExtension {
   audio: any;
   constructor(private jsPsych: JsPsych) {}
 
-  initialize = ({}: InitializeParameters): Promise<void> => {
+  initialize = (_: InitializeParameters): Promise<void> => {
     return new Promise((resolve, reject) => {
       resolve();
     });
   };
   
 
-  on_start = ({ }: OnStartParameters): void => {};
+  on_start = (_: OnStartParameters): void => {};
 
   on_load = ({audio_path}: OnLoadParameters): void => {
     console.log("on_load")
@@ -57,7 +57,7 @@ class PlayAudioExtension implements JsPsychExtension {
 
   };
 
-  on_finish = ({}: OnFinishParameters): { [key: string]: any } => {
+  on_finish = (_: OnFinishParameters): { [key: string]: any } => {
     this.audio.stop();
     return {};
   };
