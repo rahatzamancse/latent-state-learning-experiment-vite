@@ -7,20 +7,17 @@ import jsPsychPreload from '@jspsych/plugin-preload';
 import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
 import jsPsychInstructions from '@jspsych/plugin-instructions';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
-import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
+import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
 import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
-import jsPsychCallFunction from '@jspsych/plugin-call-function';
 
 
 import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
 // import jsPsychPlayAudio from './extension-play-audio';
-
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { collection, addDoc } from "firebase/firestore"; 
+import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC6C0XcUlxzCv8_xXJlyBli55cDAbG16-s",
@@ -31,10 +28,8 @@ const firebaseConfig = {
     appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
-const TRACK_EYE = false;
+const TRACK_EYE = true;
 
 const extensions = [];
 if (TRACK_EYE) {
@@ -48,11 +43,48 @@ if (TRACK_EYE) {
 // extensions.push({
 //     type: jsPsychPlayAudio,
 // })
+
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const docRef = doc(collection(db, "experiments"));
+
+setDoc(docRef, {
+    trials: [],
+}).catch(e => {
+    console.error("Error creating document: ", e);
+}).then(() => {
+    console.log("Document successfully created!");
+})
+
+
+
 const jsPsych = initJsPsych({
     extensions: extensions,
-    on_finish: async () => {
+    on_data_update: (data: any) => {
+        const trialData = JSON.parse(JSON.stringify(data));
+        console.log("Updated Data: ", data);
+        function convertNestedArrays(obj: any) {
+            for (const key in obj) {
+                if (Array.isArray(obj[key])) {
+                    obj[key] = obj[key].reduce((acc: any, val: any, i: number) => {
+                        acc[i] = val;
+                        return acc;
+                    }, {});
+                } else if (typeof obj[key] === "object") {
+                    convertNestedArrays(obj[key]);
+                }
+            }
+        }
+        convertNestedArrays(trialData);
+        updateDoc(docRef, {
+            trials: arrayUnion(trialData),
+        }).catch(e => { console.error("Error storing Data: ", e) }
+        ).then(() => { console.log("Added trial data: ", trialData); });
+        return {};
+    },
+    on_finish: () => {
         jsPsych.data.get().localSave('json', 'data.json');
-    }
+    },
 });
 
 
@@ -92,7 +124,6 @@ timeline.push({
     //             audio_path: 'audio/intro.mp3',
     //         }
     //     }
-    
     // ]
 });
 
@@ -124,7 +155,7 @@ timeline.push({
         } else if (data.width < 1000 || data.height < 600) {
             return '<p>Your screen is too small to participate in this experiment. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
         }
-    }
+    },
 })
 
 
@@ -139,13 +170,13 @@ if (TRACK_EYE) {
     timeline.push({
         type: jsPsychWebgazerInitCamera,
     })
-    
+
     timeline.push({
         type: jsPsychInstructions,
         pages: [
-        `<h1>Camera Calibration</h1>
+            `<h1>Camera Calibration</h1>
         <p>Before we start the experiment, we need to calibrate your camera. Please follow the instructions carefully.</p>`,
-        `<h1>Camera Calibration</h1>
+            `<h1>Camera Calibration</h1>
         <p>During the calibration, you will see a few dots on the screen. Please look at the dots as they appear. Then you need to click them with your mouse.</p>`,
         ],
         show_clickable_nav: true
@@ -161,7 +192,8 @@ if (TRACK_EYE) {
     //     type: jsPsychWebgazerValidate,
     //     validation_points: [[-300,300], [300,300],[-300,-300],[300,-300]],
     //     validation_point_coordinates: 'center-offset-pixels',
-    //     roi_radius: 100
+    //     roi_radius: 100,
+    //     extensions: [ FirebaseExtension ]
     // })
 }
 
@@ -234,7 +266,7 @@ const STIMULI_SIZE = 0.5;
 
 timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<img src="${context1_stimulus[0].image}" width="${STIMULI_SIZE*100}%" />
+    stimulus: `<img src="${context1_stimulus[0].image}" width="${STIMULI_SIZE * 100}%" />
 <p>This is a treasure. Each treasure has 5 features at 5 corners.</p>
 <p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>
 <p>Press the button below to assign the name of the treasure.</p>`,
@@ -251,13 +283,13 @@ timeline.push({
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
+        },
     ] : [],
     data: { tutorial: true },
 });
 
 function unnestDragData(data: any) {
-    const drag_data_obj: { [key: number]: {x: number, y: number, t: number}} = {};
+    const drag_data_obj: { [key: number]: { x: number, y: number, t: number } } = {};
     data.drag_data.forEach((d: any, i: number) => {
         drag_data_obj[i] = d;
     });
@@ -285,7 +317,7 @@ const firstTrial = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
+        },
     ] : [],
     on_finish: unnestDragData,
     data: { tutorial: true },
@@ -366,7 +398,7 @@ const showStimuli = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
+        },
     ] : [],
 }
 const actionSelection = {
@@ -390,7 +422,7 @@ const actionSelection = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        }
+        },
     ] : [],
     on_finish: unnestDragData
 }
@@ -473,7 +505,7 @@ const context3Procedure = {
     ],
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
         {
-            stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE*100}%" />`,
+            stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
             correct_bucket_index: context3_stimulus[i].correct_action,
             stimuli_path: context3_stimulus[i].image
         }
@@ -485,7 +517,7 @@ timeline.push(context3Procedure);
 
 
 timeline.push({
-    type: jsPsychSurveyMultiChoice,
+    type: jsPsychSurveyMultiSelect,
     questions: [
         {
             prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? ",
@@ -504,24 +536,6 @@ timeline.push({
     ],
 })
 
-
-timeline.push({
-    type: jsPsychCallFunction,
-    async: true,
-    func: function (done: (ref_id: any) => void) {
-        const trials = JSON.parse(jsPsych.data.get().json());
-        console.log(trials);
-        addDoc(collection(db, "experiments"), {
-            trials,
-        }).catch(e => { console.error("Error storing Data: ", e) }
-        ).then(docRef => {
-            if(docRef) {
-                console.log("Document written with ID: ", docRef.id);
-                done(docRef.id)
-            }
-        });
-    }
-})
 
 // outro
 timeline.push({
