@@ -62,6 +62,7 @@ extensions.push({
 const db = UPLOAD_FIRESTORE ? getFirestore(initializeApp(firebaseConfig)) : undefined;
 const docRef = UPLOAD_FIRESTORE ? doc(collection(db!, "experiments")) : undefined;
 
+let NUMBER_OF_WRITES = 0;
 if (UPLOAD_FIRESTORE) {
     setDoc(docRef!, {
         trials: [],
@@ -69,6 +70,7 @@ if (UPLOAD_FIRESTORE) {
         console.error("Error creating document: ", e);
     }).then(() => {
         console.log("Document successfully created!");
+        NUMBER_OF_WRITES++;
     })
 }
 
@@ -94,7 +96,10 @@ const jsPsych = initJsPsych({
             updateDoc(docRef!, {
                 trials: arrayUnion(trialData),
             }).catch(e => { console.error("Error storing Data: ", e) }
-            ).then(() => { console.log("Added trial data: ", trialData); });
+            ).then(() => {
+                console.log("Added trial data: ", trialData);
+                NUMBER_OF_WRITES++;
+            });
         }
         else {
             console.log("Dry run: ", trialData);
@@ -102,6 +107,7 @@ const jsPsych = initJsPsych({
         return {};
     },
     on_finish: () => {
+        console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
         jsPsych.data.get().localSave('json', 'data.json');
     },
 });
