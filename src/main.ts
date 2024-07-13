@@ -1,8 +1,9 @@
 import { initJsPsych } from 'jspsych';
 import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
+import jsPsychExtensionMouseTracking from '@jspsych/extension-mouse-tracking';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
 import jsPsychWebgazerCalibrate from '@jspsych/plugin-webgazer-calibrate';
-// import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
+import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
 import jsPsychPreload from '@jspsych/plugin-preload';
 import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
 import jsPsychInstructions from '@jspsych/plugin-instructions';
@@ -15,12 +16,18 @@ import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
 import { shuffleIndices } from './utils';
 
 import jsPsychDragndrop from './plugin-dragndrop';
-// import jsPsychPlayAudio from './extension-play-audio';
+import jsPsychPlayAudio from './extension-play-audio';
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
+console.log(import.meta.env)
+
+if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+    console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
+    throw new Error("Firebase API key not found.");
+}
 const firebaseConfig = {
-    apiKey: "AIzaSyC6C0XcUlxzCv8_xXJlyBli55cDAbG16-s",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: "latent-state-learning.firebaseapp.com",
     projectId: "latent-state-learning",
     storageBucket: "latent-state-learning.appspot.com",
@@ -30,6 +37,7 @@ const firebaseConfig = {
 
 
 const TRACK_EYE = true;
+const UPLOAD_FIRESTORE = true;
 
 const extensions = [];
 if (TRACK_EYE) {
@@ -40,29 +48,35 @@ if (TRACK_EYE) {
         }
     });
 }
-// extensions.push({
-//     type: jsPsychPlayAudio,
-// })
-
-
-const db = getFirestore(initializeApp(firebaseConfig));
-const docRef = doc(collection(db, "experiments"));
-
-setDoc(docRef, {
-    trials: [],
-}).catch(e => {
-    console.error("Error creating document: ", e);
-}).then(() => {
-    console.log("Document successfully created!");
+extensions.push({
+    type: jsPsychExtensionMouseTracking,
+    params: {
+        minimum_sample_time: 100,
+    }
+})
+extensions.push({
+    type: jsPsychPlayAudio,
 })
 
+
+const db = UPLOAD_FIRESTORE ? getFirestore(initializeApp(firebaseConfig)) : undefined;
+const docRef = UPLOAD_FIRESTORE ? doc(collection(db!, "experiments")) : undefined;
+
+if (UPLOAD_FIRESTORE) {
+    setDoc(docRef!, {
+        trials: [],
+    }).catch(e => {
+        console.error("Error creating document: ", e);
+    }).then(() => {
+        console.log("Document successfully created!");
+    })
+}
 
 
 const jsPsych = initJsPsych({
     extensions: extensions,
     on_data_update: (data: any) => {
         const trialData = JSON.parse(JSON.stringify(data));
-        console.log("Updated Data: ", data);
         function convertNestedArrays(obj: any) {
             for (const key in obj) {
                 if (Array.isArray(obj[key])) {
@@ -76,10 +90,15 @@ const jsPsych = initJsPsych({
             }
         }
         convertNestedArrays(trialData);
-        updateDoc(docRef, {
-            trials: arrayUnion(trialData),
-        }).catch(e => { console.error("Error storing Data: ", e) }
-        ).then(() => { console.log("Added trial data: ", trialData); });
+        if (UPLOAD_FIRESTORE) {
+            updateDoc(docRef!, {
+                trials: arrayUnion(trialData),
+            }).catch(e => { console.error("Error storing Data: ", e) }
+            ).then(() => { console.log("Added trial data: ", trialData); });
+        }
+        else {
+            console.log("Dry run: ", trialData);
+        }
         return {};
     },
     on_finish: () => {
@@ -98,7 +117,7 @@ timeline.push({
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
         ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
     ],
-    audio: ['audio/intro.mp3'],
+    audio: ['audio/intro.mp3', 'audio/webgazer-calibration.mp3'],
     video: [],
 });
 
@@ -117,14 +136,14 @@ timeline.push({
 <p>In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
     ],
     show_clickable_nav: true,
-    // extensions: [
-    //     {
-    //         type: jsPsychPlayAudio,
-    //         params: {
-    //             audio_path: 'audio/intro.mp3',
-    //         }
-    //     }
-    // ]
+    extensions: [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3',
+            }
+        }
+    ]
 });
 
 
@@ -164,7 +183,7 @@ if (TRACK_EYE) {
     timeline.push({
         type: jsPsychHtmlKeyboardResponse,
         trial_duration: 2000,
-        stimulus: `<h1>Reminder: No video will be recorded in this session. </h1>`
+        stimulus: `<h1>Please allow camera access for eye tracking. <span style="color: red">No video will be recorded.</span> </h1>`
     })
 
     timeline.push({
@@ -187,14 +206,15 @@ if (TRACK_EYE) {
         calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
         calibration_mode: 'click',
         randomize_calibration_order: true,
+        extensions: [
+            {
+                type: jsPsychPlayAudio,
+                params: {
+                    audio_path: 'audio/webgazer-calibration.mp3',
+                }
+            }
+        ]
     })
-    // timeline.push({
-    //     type: jsPsychWebgazerValidate,
-    //     validation_points: [[-300,300], [300,300],[-300,-300],[300,-300]],
-    //     validation_point_coordinates: 'center-offset-pixels',
-    //     roi_radius: 100,
-    //     extensions: [ FirebaseExtension ]
-    // })
 }
 
 // Welcome screen
@@ -204,6 +224,10 @@ timeline.push({
         `<h1>The Lost Treasures of Colorland</h1>
 <p>Welcome to Colorland, a vibrant kingdom where every shape, color, and pattern contributes to its enchanting festivals. This year, a whirlwind has mixed up all the decorations needed for the grand Festival of Patterns. Without these decorations in their right places, the festival cannot start.</p>`,
         `<p>To save the Festival of Patterns, we need your special skills. We have four magical buckets, each dedicated to collecting specific types of festival decorations</p>
+        <img src="images/baskets/basket-blue.png" width="100px" />
+        <img src="images/baskets/basket-green.png" width="100px" />
+        <img src="images/baskets/basket-red.png" width="100px" />
+        <img src="images/baskets/basket-yellow.png" width="100px" />
 <p>Here’s how you can help: We will show you one special decoration at a time. For the first item, we'll tell you exactly which bucket it belongs to. If you place it correctly, a magical reward will appear! For the other items, we won't tell you their buckets, but if you remember the clues and use your best judgment, you’ll earn more rewards each time you choose correctly.</p>`
     ],
     show_clickable_nav: true
@@ -271,8 +295,8 @@ timeline.push({
 <p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>
 <p>Press the button below to assign the name of the treasure.</p>`,
     choices: [treasure_names[0]],
-    extensions: TRACK_EYE ? [
-        {
+    extensions: [ 
+        ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
@@ -283,30 +307,37 @@ timeline.push({
                     '#jspsych-dragndrop-element',
                 ],
             }
-        },
-    ] : [],
+        }]:[],
+        {
+            type: jsPsychExtensionMouseTracking,
+        }
+    ],
     data: { tutorial: true },
 });
 
-function unnestDragData(data: any) {
-    const drag_data_obj: { [key: number]: { x: number, y: number, t: number } } = {};
-    data.drag_data.forEach((d: any, i: number) => {
-        drag_data_obj[i] = d;
-    });
-    data.drag_data = drag_data_obj;
+function getLastTrialTreasureName() {
+    return treasure_names[
+        jsPsych.data.get()
+            .filter({ trial_type: 'html-button-response' })
+            .last(1)
+            .values()[0]
+            ['response']
+    ];
 }
 
 const firstTrial = {
     type: jsPsychDragndrop,
     element: context1_stimulus[0].image,
-    show_labels: true,
+    show_element_label: true,
+    element_label: () => getLastTrialTreasureName(),
     buckets: BASKETS.map(b => b.image),
+    show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
     correct_bucket_index: 0,
     randomize_bucket_order: true,
     text_prompt: `This treasure belongs to the <b>${BASKETS[0].name}</b>. Drag the treasure to that basket.`,
-    extensions: TRACK_EYE ? [
-        {
+    extensions: [ 
+        ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
@@ -317,9 +348,20 @@ const firstTrial = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        },
-    ] : [],
-    on_finish: unnestDragData,
+        }]:[],
+        {
+            type: jsPsychExtensionMouseTracking,
+            params: {
+                targets: [
+                    '#jspsych-dragndrop-element img',
+                    '#jspsych-dragndrop-bucket-0 img',
+                    '#jspsych-dragndrop-bucket-1 img',
+                    '#jspsych-dragndrop-bucket-2 img',
+                    '#jspsych-dragndrop-bucket-3 img',
+                ],
+            }
+        }
+    ],
     data: { tutorial: true },
 };
 
@@ -364,13 +406,37 @@ const rewardTrial = {
 };
 
 const fixationPoint = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div style="font-size: 48px;">+</div>`,
-    trial_duration: 600,
-    choices: "NO_KEYS",
+    type: jsPsychWebgazerValidate,
+    validation_points: [[0, 0]],
+    validation_point_coordinates: 'center-offset-pixels',
+    roi_radius: 100,
 }
 
 const showStimuli = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: jsPsych.timelineVariable('stimuli'),
+    trial_duration: 4000,
+    choices: "NO_KEYS",
+    extensions: [ 
+        ... TRACK_EYE ? [{
+            type: jsPsychExtensionWebgazer,
+            params: {
+                targets: [
+                    '#jspsych-dragndrop-bucket-0',
+                    '#jspsych-dragndrop-bucket-1',
+                    '#jspsych-dragndrop-bucket-2',
+                    '#jspsych-dragndrop-bucket-3',
+                    '#jspsych-dragndrop-element',
+                ],
+            }
+        }]:[],
+        {
+            type: jsPsychExtensionMouseTracking,
+        }
+    ],
+}
+
+const stateEstimation = {
     type: jsPsychHtmlButtonResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
     choices: () => treasure_names.slice(0, currentAssignedTreasure + 1).concat("Assign new treasure state"),
@@ -386,8 +452,8 @@ const showStimuli = {
             data.new_state = true;
         }
     },
-    extensions: TRACK_EYE ? [
-        {
+    extensions: [ 
+        ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
@@ -398,20 +464,25 @@ const showStimuli = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        },
-    ] : [],
+        }]:[],
+        {
+            type: jsPsychExtensionMouseTracking,
+        }
+    ],
 }
 const actionSelection = {
     type: jsPsychDragndrop,
     element: jsPsych.timelineVariable('stimuli_path'),
+    show_element_label: true,
+    element_label: () => getLastTrialTreasureName(),
     buckets: BASKETS.map(b => b.image),
     show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     randomize_bucket_order: true,
-    extensions: TRACK_EYE ? [
-        {
+    extensions: [ 
+        ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
@@ -422,9 +493,20 @@ const actionSelection = {
                     '#jspsych-dragndrop-element',
                 ],
             }
-        },
-    ] : [],
-    on_finish: unnestDragData
+        }]:[],
+        {
+            type: jsPsychExtensionMouseTracking,
+            params: {
+                targets: [
+                    '#jspsych-dragndrop-element img',
+                    '#jspsych-dragndrop-bucket-0 img',
+                    '#jspsych-dragndrop-bucket-1 img',
+                    '#jspsych-dragndrop-bucket-2 img',
+                    '#jspsych-dragndrop-bucket-3 img',
+                ],
+            }
+        }
+    ],
 }
 
 const firstLoop = {
@@ -439,6 +521,7 @@ const context1Procedure = {
     timeline: [
         fixationPoint,
         showStimuli,
+        stateEstimation,
         showIfNewState,
         actionSelection,
         rewardTrial,
@@ -468,6 +551,7 @@ const context2Procedure = {
     timeline: [
         fixationPoint,
         showStimuli,
+        stateEstimation,
         showIfNewState,
         actionSelection,
         rewardTrial,
@@ -499,6 +583,7 @@ const context3Procedure = {
     timeline: [
         fixationPoint,
         showStimuli,
+        stateEstimation,
         showIfNewState,
         actionSelection,
         rewardTrial,

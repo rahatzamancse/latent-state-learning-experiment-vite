@@ -14,6 +14,7 @@
     "vite": "^5.3.1"
   },
   "dependencies": {
+    "@jspsych/extension-mouse-tracking": "^1.0.3",
     "@jspsych/extension-webgazer": "^1.0.3",
     "@jspsych/plugin-browser-check": "^1.0.3",
     "@jspsych/plugin-call-function": "^1.1.3",

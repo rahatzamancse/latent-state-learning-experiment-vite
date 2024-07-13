@@ -8,6 +8,14 @@ const info = <const>{
       type: ParameterType.IMAGE, 
       default: undefined,
     },
+    show_element_label: {
+      type: ParameterType.BOOL,
+      default: false,
+    },
+    element_label: {
+      type: ParameterType.STRING,
+      default: "",
+    },
     buckets: {
       type: ParameterType.COMPLEX,
       default: undefined,
@@ -74,6 +82,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     container.innerHTML += `<div class="wrapper" style="display: inline-grid; grid-template-rows: 1fr; grid-template-columns: 1fr; background-color: white;">
       <div id="jspsych-dragndrop-element" class="jspsych-dragndrop-element" style="transform: scale(1); transform-origin: 0 0;">
         <img src="${trial.element}" width="100%"/>
+        ${trial.show_element_label ? '<p>'+trial.element_label+'</p>' : ''}
       </div>
     </div>
     `;
