@@ -66,6 +66,9 @@ let NUMBER_OF_WRITES = 0;
 if (UPLOAD_FIRESTORE) {
     setDoc(docRef!, {
         trials: [],
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toISOString().split('T')[1].split('.')[0],
+        local_testing: import.meta.env.VITE_LOCAL_TESTING ? true : false,
     }).catch(e => {
         console.error("Error creating document: ", e);
     }).then(() => {
