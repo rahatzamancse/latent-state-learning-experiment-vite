@@ -343,7 +343,7 @@ const firstTrial = {
     show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
     correct_bucket_index: 0,
-    randomize_bucket_order: true,
+    randomize_bucket_order: false,
     text_prompt: `This treasure belongs to the <b>${BASKETS[0].name}</b>. Drag the treasure to that basket.`,
     extensions: [ 
         ... TRACK_EYE ? [{
@@ -489,7 +489,7 @@ const actionSelection = {
     bucket_labels: BASKETS.map(b => b.name),
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
-    randomize_bucket_order: true,
+    randomize_bucket_order: false,
     extensions: [ 
         ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
