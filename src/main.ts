@@ -11,34 +11,26 @@ import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
 import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
-
-
-import { shuffleIndices } from './utils';
-
 import jsPsychDragndrop from './plugin-dragndrop';
 import jsPsychPlayAudio from './extension-play-audio';
+// import jsPsychAudioKeyboardResponse from '@jspsych/plugin-audio-keyboard-response';
+
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
-console.log(import.meta.env)
+import { shuffleIndices, getShuffledArray } from './utils';
 
 if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
     throw new Error("Firebase API key not found.");
 }
-const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: "latent-state-learning.firebaseapp.com",
-    projectId: "latent-state-learning",
-    storageBucket: "latent-state-learning.appspot.com",
-    messagingSenderId: "926544010648",
-    appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
-};
 
+const DEBUGGING = import.meta.env.VITE_DEBUGGING ? true : false;
+const TRACK_EYE = false;
+const UPLOAD_FIRESTORE = DEBUGGING ? false : true;
+const AUDIO = false;
 
-const TRACK_EYE = true;
-const UPLOAD_FIRESTORE = true;
-
+// Initialize Extensions
 const extensions = [];
 if (TRACK_EYE) {
     extensions.push({
@@ -54,11 +46,20 @@ extensions.push({
         minimum_sample_time: 100,
     }
 })
-extensions.push({
-    type: jsPsychPlayAudio,
-})
+if (AUDIO)
+    extensions.push({
+        type: jsPsychPlayAudio,
+    })
 
-
+// Initialize Firebase
+const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: "latent-state-learning.firebaseapp.com",
+    projectId: "latent-state-learning",
+    storageBucket: "latent-state-learning.appspot.com",
+    messagingSenderId: "926544010648",
+    appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
+};
 const db = UPLOAD_FIRESTORE ? getFirestore(initializeApp(firebaseConfig)) : undefined;
 const docRef = UPLOAD_FIRESTORE ? doc(collection(db!, "experiments")) : undefined;
 
@@ -77,7 +78,7 @@ if (UPLOAD_FIRESTORE) {
     })
 }
 
-
+// Initialize jsPsych
 const jsPsych = initJsPsych({
     extensions: extensions,
     on_data_update: (data: any) => {
@@ -111,10 +112,165 @@ const jsPsych = initJsPsych({
     },
     on_finish: () => {
         console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
-        jsPsych.data.get().localSave('json', 'data.json');
+        if (DEBUGGING)
+            jsPsych.data.get().localSave('json', 'data.json');
     },
 });
 
+
+const all_context_state_names = [
+    [ "Brisket", "Casket", "Docket", "Ferret" ], // tutorial
+    ['Quixot', 'Wyvern', 'Eronimo', 'Rochar', 'Tynix', 'Yrton', 'Urono', 'Izor', 'Oronim', 'Pexis', 'Arctis', 'Syber'], // context 1
+    ['Dynax', 'Fyxis', 'Gyron', 'Hyxel', 'Jaltra', 'Kavra', 'Lyris', 'Nexor', 'Pyloth', 'Raxor', 'Syntor', 'Virox'], // context 2
+    ['Zandor', 'Bravik', 'Caldor', 'Dorath', 'Evrix', 'Fraxen', 'Glonar', 'Hesper', 'Ilmara', 'Jorath', 'Kyxen', 'Lomir'], // context 3
+];
+const all_context_assigned_indices = [0, 0, 0, 0];
+
+const tutorial_baskets = [
+    {
+        image: "images/tutorial/buckets/tutorial_basket-1.png",
+        name: "Basket 1",
+    },
+    {
+        image: "images/tutorial/buckets/tutorial_basket-2.png",
+        name: "Basket 2",
+    },
+    {
+        image: "images/tutorial/buckets/tutorial_basket-3.png",
+        name: "Basket 3",
+    },
+    {
+        image: "images/tutorial/buckets/tutorial_basket-4.png",
+        name: "Basket 4",
+    },
+];
+const BASKETS_TMP = [
+    {
+        color: "blue",
+        image: "images/baskets/basket-blue.png",
+        name: "Emerald Vault",
+    },
+    {
+        color: "green",
+        image: "images/baskets/basket-green.png",
+        name: "Azure Haven",
+    },
+    {
+        color: "red",
+        image: "images/baskets/basket-red.png",
+        name: "Crimson Nook",
+    },
+    {
+        color: "yellow",
+        image: "images/baskets/basket-yellow.png",
+        name: "Golden Repository",
+    },
+];
+// const BASKETS = RANDOMIZE_ACTION_ASSIGNMENTS ? shuffleIndices(4).map(i => BASKETS_TMP[i]) : BASKETS_TMP;
+const BASKETS = BASKETS_TMP;
+
+const tutorial_stimulus = [
+    [1, 1], // stimuli, basket
+    [2, 2],
+    [3, 3],
+    [4, 4],
+].map(i => ({
+    image: `images/tutorial/stimulus/tutorial_treasures-${i[0]}.png`,
+    correct_action: i[1] - 1,
+    data: {
+        tutorial: true,
+    }
+}));
+const context1_stimulus = [
+    [1, "blue"],
+    [2, "blue"],
+    [3, "green"],
+    [4, "green"],
+].map(i => ({
+    image: `images/stimulus/animal_${i[0]}.png`,
+    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 1,
+    }
+}));
+const context2_stimulus = [
+    [5, "red"],
+    [6, "red"],
+    [7, "yellow"],
+    [8, "yellow"],
+].map(i => ({
+    image: `images/stimulus/animal_${i[0]}.png`,
+    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 2,
+    }
+}));
+const context3_stimulus = [
+    [1, "blue"],
+    [2, "blue"],
+    [3, "green"],
+    [4, "green"],
+    [5, "red"],
+    [6, "red"],
+    [7, "yellow"],
+    [8, "yellow"],
+].map(i => ({
+    image: `images/stimulus/animal_${i[0]}.png`,
+    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 3,
+    }
+}));
+const all_context_stimulus = [
+    tutorial_stimulus,
+    context1_stimulus,
+    context2_stimulus,
+    context3_stimulus,
+];
+
+const rewards = {
+    correct: "images/reward/diamond.png",
+    incorrect: "images/reward/nodiamond.png",
+}
+
+// Utility functions
+function getOutcome() {
+    return jsPsych
+        .data.get()
+        .filter({ trial_type: 'dragndrop' })
+        .last(1)
+        .values()[0]
+        .is_correct
+}
+function getStateEstimation() {
+    return jsPsych
+        .data.get()
+        .filter({ trial_type: 'html-button-response' })
+        .last(1)
+        .values()[0]
+        .estimated_state;
+}
+function getLastTrialTreasureName(all_treasure_names: string[]) {
+    // return all_treasure_names[
+    //     jsPsych.data.get()
+    //         .filter({ trial_type: 'html-button-response' })
+    //         .last(1)
+    //         .values()[0]
+    //         ['response']
+    // ];
+    
+    return jsPsych.data.get()
+        .filter({ trial_type: 'html-button-response' })
+        .last(1)
+        .values()[0]
+        ['estimated_state'];
+
+}
+
+
+
+const STIMULI_SIZE = 0.5;
+// const BUCKET_SIZE = 200;
 
 const timeline = [];
 
@@ -123,6 +279,8 @@ timeline.push({
     type: jsPsychPreload,
     images: [
         ...["blue", "green", "red", "yellow"].map(c => `images/baskets/basket-${c}.png`),
+        ...[1, 2, 3, 4].map(i => `images/tutorial/stimulus/tutorial_treasures-${i}.png`),
+        ...[1, 2, 3, 4].map(i => `images/tutorial/buckets/tutorial_basket-${i}.png`),
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
         ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
     ],
@@ -133,40 +291,77 @@ timeline.push({
 
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>Welcome to the psychiatric experiment!</h1><p>Press any key to continue.</p>`,
+    stimulus: `<h1>Welcome to the experiment!</h1><p>Press any key to continue.</p>`,
 })
 
 timeline.push({
-    type: jsPsychInstructions,
-    pages: [
-        `<h1>Experiment</h1>
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Experiment</h1>
 <p>In this experiment, you will play a small treasure sorting game.</p>
-<p>During the playing, your activity and eye movement will be recorded. However, your video will not be recorded.</p>
-<p>In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
-    ],
-    show_clickable_nav: true,
-    extensions: [
+    <p>Press any key to continue.</p>`,
+    extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
             params: {
                 audio_path: 'audio/intro.mp3',
             }
         }
-    ]
+    ]: [],
+})
+
+
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Experiment</h1>
+<p>During the playing, your activity and eye movement will be recorded. However, your video will not be recorded.</p>
+    <p>Press any key to continue.</p>`,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3',
+            }
+        }
+    ] : [],
+})
+
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Experiment</h1>
+<p>In the next screen, your camera will be calibrated to track your eye properly. Please follow the instructions properly to help us get the most accurate experiment results.</p>
+    <p>Press any key to continue.</p>`,
+    extensions: AUDIO? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3',
+            }
+        }
+    ] : [],
 });
 
 
+// Switch to fullscreen
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Fullscreen</h1>
 <p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>
 <p>Press any key to fullscreen and continue to camera calibration.</p>`,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3',
+            }
+        }
+    ] : [],
 })
-// Switch to fullscreen
-timeline.push({
-    type: jsPsychFullscreen,
-    fullscreen_mode: true,
-});
+if (!DEBUGGING)
+    timeline.push({
+        type: jsPsychFullscreen,
+        fullscreen_mode: true,
+    });
+// TODO: Always validate if the fullscreen is enabled, if not, ask them again to go fullscreen or cancel the experiment.
 
 timeline.push({
     type: jsPsychBrowserCheck,
@@ -215,14 +410,14 @@ if (TRACK_EYE) {
         calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
         calibration_mode: 'click',
         randomize_calibration_order: true,
-        extensions: [
+        extensions: AUDIO ? [
             {
                 type: jsPsychPlayAudio,
                 params: {
                     audio_path: 'audio/webgazer-calibration.mp3',
                 }
             }
-        ]
+        ] : [],
     })
 }
 
@@ -242,202 +437,111 @@ timeline.push({
     show_clickable_nav: true
 })
 
-const treasure_names = ['Quixot', 'Wyvern', 'Eronimo', 'Rochar', 'Tynix', 'Yrton', 'Urono', 'Izor', 'Oronim', 'Pexis', 'Arctis', 'Syber', 'Dynax', 'Fyxis', 'Gyron', 'Hyxel', 'Jaltra', 'Kavra', 'Lyris'];
 
-const FIRST_BASKETS = [
-    {
-        color: "blue",
-        image: "images/baskets/basket-blue.png",
-        name: "Emerald Vault",
-    },
-    {
-        color: "green",
-        image: "images/baskets/basket-green.png",
-        name: "Azure Haven",
-    },
-    {
-        color: "red",
-        image: "images/baskets/basket-red.png",
-        name: "Crimson Nook",
-    },
-    {
-        color: "yellow",
-        image: "images/baskets/basket-yellow.png",
-        name: "Golden Repository",
-    },
-];
-
-const RANDOMIZE_ACTION_ASSIGNMENTS = true;
-const BASKETS = RANDOMIZE_ACTION_ASSIGNMENTS ? shuffleIndices(4).map(i => FIRST_BASKETS[i]) : FIRST_BASKETS;
-
-const context1_stimulus = [
-    [1, "blue"],
-    [2, "blue"],
-    [3, "green"],
-    [4, "green"],
-].map(i => ({
-    image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 1,
-    }
-}));
-const context2_stimulus = [
-    [5, "red"],
-    [6, "red"],
-    [7, "yellow"],
-    [8, "yellow"],
-].map(i => ({
-    image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 2,
-    }
-}));
-// merge context 1 and context 2, but context: 3 for data
-const context3_stimulus = [
-    [1, "blue"],
-    [2, "blue"],
-    [3, "green"],
-    [4, "green"],
-    [5, "red"],
-    [6, "red"],
-    [7, "yellow"],
-    [8, "yellow"],
-].map(i => ({
-    image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 3,
-    }
-}));
-
-let currentAssignedTreasure = 0;
-
-const rewards = {
-    correct: "images/reward/diamond.png",
-    incorrect: "images/reward/nodiamond.png",
+// Tutorial start
+const tutorialFixationPoint = {
+    type: jsPsychWebgazerValidate,
+    validation_points: [[0, 0]],
+    validation_point_coordinates: 'center-offset-pixels',
+    roi_radius: 100,
+    show_validation_data: DEBUGGING ? true : false,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3', // TODO: Add audio
+            }
+        }
+    ] : [],
 }
 
-const STIMULI_SIZE = 0.5;
-// const BUCKET_SIZE = 200;
-
-timeline.push({
+const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<img src="${context1_stimulus[0].image}" width="${STIMULI_SIZE * 100}%" />
-<p>This is a treasure. Each treasure has 5 features at 5 corners.</p>
-<p>Let us assume the name of the treasure is "${treasure_names[0]}".</p>
+    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 100}%" />
+<p>This is a${jsPsych.timelineVariable('correct_bucket_index') == 0 ? "" : " another"} sample treasure. </p>
+<p>Let us assume the name of the treasure is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
 <p>Press the button below to assign the name of the treasure.</p>`,
-    choices: [treasure_names[0]],
-    extensions: [ 
-        ... TRACK_EYE ? [{
-            type: jsPsychExtensionWebgazer,
-            params: {
-                targets: [
-                    '#jspsych-dragndrop-bucket-0',
-                    '#jspsych-dragndrop-bucket-1',
-                    '#jspsych-dragndrop-bucket-2',
-                    '#jspsych-dragndrop-bucket-3',
-                    '#jspsych-dragndrop-element',
-                ],
-            }
-        }]:[],
-        {
-            type: jsPsychExtensionMouseTracking,
-        }
-    ],
+    choices: () => [all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]],
     data: { tutorial: true },
-});
-
-function getLastTrialTreasureName() {
-    return treasure_names[
-        jsPsych.data.get()
-            .filter({ trial_type: 'html-button-response' })
-            .last(1)
-            .values()[0]
-            ['response']
-    ];
+    on_finish: (data: any) => {
+        const tutorial_states = all_context_state_names[jsPsych.timelineVariable('context')];
+        data.new_state = true;
+        all_context_assigned_indices[jsPsych.timelineVariable('context')]++;
+        data.estimated_state = tutorial_states[jsPsych.timelineVariable('correct_bucket_index')];
+    },
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/intro.mp3', // TODO: Add audio
+            }
+        }
+    ] : [],
 }
 
-const firstTrial = {
+const tutorialActionSelection = {
     type: jsPsychDragndrop,
-    element: context1_stimulus[0].image,
+    element: jsPsych.timelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(),
-    buckets: BASKETS.map(b => b.image),
+    element_label: () => {
+        return getLastTrialTreasureName(all_context_state_names[jsPsych.timelineVariable('context')])
+    },
+    buckets: tutorial_baskets.map(b => b.image),
     show_labels: true,
-    bucket_labels: BASKETS.map(b => b.name),
-    correct_bucket_index: 0,
+    bucket_labels: tutorial_baskets.map(b => b.name),
+    correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     randomize_bucket_order: false,
-    text_prompt: `This treasure belongs to the <b>${BASKETS[0].name}</b>. Drag the treasure to that basket.`,
+    text_prompt: () => `This treasure belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
     extensions: [ 
-        ... TRACK_EYE ? [{
-            type: jsPsychExtensionWebgazer,
+        ... AUDIO ? [{
+            type: jsPsychPlayAudio,
             params: {
-                targets: [
-                    '#jspsych-dragndrop-bucket-0',
-                    '#jspsych-dragndrop-bucket-1',
-                    '#jspsych-dragndrop-bucket-2',
-                    '#jspsych-dragndrop-bucket-3',
-                    '#jspsych-dragndrop-element',
-                ],
+                audio_path: 'audio/intro.mp3',
             }
-        }]:[],
-        {
-            type: jsPsychExtensionMouseTracking,
-            params: {
-                targets: [
-                    '#jspsych-dragndrop-element img',
-                    '#jspsych-dragndrop-bucket-0 img',
-                    '#jspsych-dragndrop-bucket-1 img',
-                    '#jspsych-dragndrop-bucket-2 img',
-                    '#jspsych-dragndrop-bucket-3 img',
-                ],
-            }
-        }
+        }]: [],
     ],
     data: { tutorial: true },
 };
-
-function getOutcome() {
-    return jsPsych
-        .data.get()
-        .filter({ trial_type: 'dragndrop' })
-        .last(1)
-        .values()[0]
-        .is_correct
-}
-
-function getStateEstimation() {
-    return jsPsych
-        .data.get()
-        .filter({ trial_type: 'html-button-response' })
-        .last(1)
-        .values()[0]
-        .estimated_state;
-}
-
-const showIfNewState = {
-    timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: () => `${jsPsych.timelineVariable('stimuli')}
-    <p>The new name of this treasure is <b>${getStateEstimation()}</b>.</p>
-    <p>Press any key to continue.</p>`,
-    }],
-    conditional_function: () => jsPsych
-        .data.get()
-        .filter({ trial_type: 'html-button-response' })
-        .last(1)
-        .values()[0]
-        .new_state
-}
-
-const rewardTrial = {
+const tutorialRewardTrial = {
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: () => getOutcome() ? `<img src="${rewards.correct}" width="500px" /><p>Well done! You have earned a magical reward!</p>` : `<img src="${rewards.incorrect}" width="500px" /><p>Oops! You have not earned a magical reward this time. Please try again.</p>`,
-    // choices: "NO_KEYS",
+    stimulus: () => getOutcome() ? `
+    <img src="${rewards.correct}" width="500px" />
+    <p>Well done! You have earned a magical reward!</p>` : `
+    <img src="${rewards.incorrect}" width="500px" /> <p>Oops! You have not earned a magical reward this time. You should drag the treasure to the correct basket. </p>`,
+    choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
 };
+
+const tutorialCorrectLoop = {
+    timeline: [tutorialActionSelection, tutorialRewardTrial],
+    loop_function: () => !getOutcome(),
+};
+const tutorialProcedure = {
+    timeline: [
+        ... TRACK_EYE ? [tutorialFixationPoint] : [],
+        tutorialStateEstimation,
+        tutorialCorrectLoop,
+    ],
+    timeline_variables: Array.from({ length: 4 }).map((_, i) => ({
+        stimuli: `<img src="${tutorial_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+        correct_bucket_index: tutorial_stimulus[i].correct_action,
+        stimuli_path: tutorial_stimulus[i].image,
+        context: 0,
+    })),
+    randomize_order: false,
+    repetitions: 1,
+}
+timeline.push(tutorialProcedure);
+
+
+// Main Experiment intro
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Great job!</h1>
+<p>You have successfully completed the tutorial. Now, you will be presented with the main experiment.</p>
+<p>This time you won't know which treasure goes to which bucket. You have to assign the treasures to the buckets based on your observations.</p>
+<p>Press any key to continue.</p>`,
+})
 
 const fixationPoint = {
     type: jsPsychWebgazerValidate,
@@ -450,7 +554,7 @@ const showStimuli = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
     trial_duration: 4000,
-    choices: "NO_KEYS",
+    choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     extensions: [ 
         ... TRACK_EYE ? [{
             type: jsPsychExtensionWebgazer,
@@ -470,19 +574,34 @@ const showStimuli = {
     ],
 }
 
+let choiceOrders: number[] = [];
+
 const stateEstimation = {
     type: jsPsychHtmlButtonResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
-    choices: () => treasure_names.slice(0, currentAssignedTreasure + 1).concat("Assign new treasure state"),
+    on_start: (trial: any) => {
+        const shuffleResult = getShuffledArray(
+            all_context_state_names[jsPsych.timelineVariable('context')]
+                .slice(0, all_context_assigned_indices[jsPsych.timelineVariable('context')] + 1));
+        trial.choices = shuffleResult.shuffledArray.concat("Assign new treasure state");
+        choiceOrders = shuffleResult.originalIndices;
+    },
+    choices: [],
     prompt: "",
-    on_finish: function (data: any) {
-        if (data.response <= currentAssignedTreasure) {
-            data.estimated_state = treasure_names[data.response];
+    on_finish: (data: any) => {
+        const currentContext = jsPsych.timelineVariable('context');
+        const context_state_names = all_context_state_names[currentContext];
+        const response = choiceOrders[data.response];
+        // delete data.choiceOriginalIndices;
+        delete data.choiceOriginalIndices;
+
+        if (response <= all_context_assigned_indices[currentContext]) {
+            data.estimated_state = context_state_names[response];
             data.new_state = false;
         }
         else {
-            currentAssignedTreasure++;
-            data.estimated_state = treasure_names[currentAssignedTreasure];
+            all_context_assigned_indices[currentContext]++;
+            data.estimated_state = context_state_names[all_context_assigned_indices[currentContext]];
             data.new_state = true;
         }
     },
@@ -504,12 +623,28 @@ const stateEstimation = {
         }
     ],
 }
+const showIfNewState = {
+    timeline: [{
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: () => `${jsPsych.timelineVariable('stimuli')}
+    <p>The new name of this treasure is <b>${getStateEstimation()}</b>.</p>
+    <p>Press any key to continue.</p>`,
+    }],
+    conditional_function: () => jsPsych
+        .data.get()
+        .filter({ trial_type: 'html-button-response' })
+        .last(1)
+        .values()[0]
+        .new_state
+}
+
 const actionSelection = {
     type: jsPsychDragndrop,
     element: jsPsych.timelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(),
-    buckets: BASKETS.map(b => b.image),
+    element_label: () => getLastTrialTreasureName(all_context_state_names[jsPsych.timelineVariable('context')]),
+    buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
+    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
@@ -543,17 +678,18 @@ const actionSelection = {
     ],
 }
 
-const firstLoop = {
-    timeline: [firstTrial, rewardTrial],
-    loop_function: () => !getOutcome(),
+const rewardTrial = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: () => getOutcome() ? `
+    <img src="${rewards.correct}" width="500px" />` : `<img src="${rewards.incorrect}" width="500px" />`,
+    choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
+    trial_duration: 2000,
 };
-timeline.push(firstLoop);
-
 
 // Context 1
 const context1Procedure = {
     timeline: [
-        fixationPoint,
+        ... TRACK_EYE ? [fixationPoint] : [],
         showStimuli,
         stateEstimation,
         showIfNewState,
@@ -564,7 +700,10 @@ const context1Procedure = {
         {
             stimuli: `<img src="${context1_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
             correct_bucket_index: context1_stimulus[i].correct_action,
-            stimuli_path: context1_stimulus[i].image
+            stimuli_path: context1_stimulus[i].image,
+            context: 1,
+            buckets: [BASKETS[0], BASKETS[1]],
+            bucket_start_angle: 0,
         }
     )),
     randomize_order: true,
@@ -583,7 +722,7 @@ timeline.push({
 // Context 2
 const context2Procedure = {
     timeline: [
-        fixationPoint,
+        ... TRACK_EYE ? [fixationPoint] : [],
         showStimuli,
         stateEstimation,
         showIfNewState,
@@ -594,7 +733,10 @@ const context2Procedure = {
         {
             stimuli: `<img src="${context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
             correct_bucket_index: context2_stimulus[i].correct_action,
-            stimuli_path: context2_stimulus[i].image
+            stimuli_path: context2_stimulus[i].image,
+            context: 2, 
+            buckets: [BASKETS[2], BASKETS[3]],
+            bucket_start_angle: 90,
         }
     )),
     randomize_order: true,
@@ -615,7 +757,7 @@ timeline.push({
 // Context 3
 const context3Procedure = {
     timeline: [
-        fixationPoint,
+        ... TRACK_EYE ? [fixationPoint] : [],
         showStimuli,
         stateEstimation,
         showIfNewState,
@@ -626,7 +768,10 @@ const context3Procedure = {
         {
             stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
             correct_bucket_index: context3_stimulus[i].correct_action,
-            stimuli_path: context3_stimulus[i].image
+            stimuli_path: context3_stimulus[i].image,
+            context: 3,
+            buckets: [BASKETS[0], BASKETS[1], BASKETS[2], BASKETS[3]],
+            bucket_start_angle: 0,
         }
     )),
     randomize_order: true,
@@ -641,17 +786,12 @@ timeline.push({
         {
             prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? ",
             name: 'realTreasures',
-            options: () => treasure_names.slice(0, currentAssignedTreasure + 1),
+            options: () => all_context_state_names[0].slice(0, all_context_assigned_indices[0] + 1) 
+                .concat(all_context_state_names[1].slice(0, all_context_assigned_indices[1] + 1))
+                .concat(all_context_state_names[2].slice(0, all_context_assigned_indices[2] + 1)),
             required: true,
             horizontal: true
         },
-        {
-            prompt: "And which of the treasures are made up? They should be named as the same as the treasures you think are real.",
-            name: 'madeupTreasures',
-            options: () => treasure_names.slice(0, currentAssignedTreasure + 1),
-            required: true,
-            horizontal: true
-        }
     ],
 })
 

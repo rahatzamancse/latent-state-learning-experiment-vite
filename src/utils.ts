@@ -10,3 +10,24 @@ export function readFile(filePath: string) {
 export function shuffleIndices(n: number) {
   return Array.from({ length: n }, (_, i) => i).sort(() => Math.random() - 0.5);
 }
+
+export function getShuffledArray<T>(array: T[]): { shuffledArray: T[], originalIndices: number[] } {
+  // Copy the array to avoid modifying the original
+  const copiedArray = array.slice();
+  // Create an array of original indices
+  const originalIndices = array.map((_, index) => index);
+  
+  // Shuffle the copied array and the original indices array using the Fisher-Yates algorithm
+  for (let i = copiedArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      // Swap elements in copiedArray
+      [copiedArray[i], copiedArray[j]] = [copiedArray[j], copiedArray[i]];
+      // Swap corresponding indices in originalIndices
+      [originalIndices[i], originalIndices[j]] = [originalIndices[j], originalIndices[i]];
+  }
+
+  return {
+      shuffledArray: copiedArray,
+      originalIndices: originalIndices
+  };
+}

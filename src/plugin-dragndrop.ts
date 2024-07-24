@@ -44,6 +44,10 @@ const info = <const>{
       type: ParameterType.BOOL,
       default: false,
     },
+    bucket_start_angle: {
+      type: ParameterType.INT,
+      default: 0,
+    },
     correct_bucket_index: {
       type: ParameterType.INT,
       default: undefined,
@@ -98,8 +102,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     const draggable_xs: number[] = [];
     const draggable_ys: number[] = [];
     for (let i = 0; i < num_buckets; i++) {
-      draggable_xs.push(center_x + radius * Math.cos((angle * i * Math.PI) / 180));
-      draggable_ys.push(center_y + radius * Math.sin((angle * i * Math.PI) / 180));
+      draggable_xs.push(center_x + radius * Math.cos(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180));
+      draggable_ys.push(center_y + radius * Math.sin(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180));
     }
     // set text prompt at the bottom
     container.innerHTML += `
