@@ -95,8 +95,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     const num_buckets = trial.buckets.length;
     const angle = 360 / num_buckets;
     const radius = trial.radius!;
-    const draggable_xs = [];
-    const draggable_ys = [];
+    const draggable_xs: number[] = [];
+    const draggable_ys: number[] = [];
     for (let i = 0; i < num_buckets; i++) {
       draggable_xs.push(center_x + radius * Math.cos((angle * i * Math.PI) / 180));
       draggable_ys.push(center_y + radius * Math.sin((angle * i * Math.PI) / 180));
@@ -209,11 +209,23 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
         }
         else {
           element.remove();
+          const rt = performance.now() - startTime;
           const trial_data = {
             drag_data: allDragData,
+            buckets: Array.from(Array(trial.buckets.length).keys()).map((i) => (
+              {
+                name: [trial.buckets[i]],
+                position: randomBucketIdxs[i],
+                x: draggable_xs[i],
+                y: draggable_ys[i],
+                dropped: droppedInBucketIndex === i,
+              }
+            )),
+            correct_bucket_index: trial.correct_bucket_index,
             drop_bucket: droppedInBucketIndex,
             is_correct: droppedInBucketIndex === trial.correct_bucket_index,
-            buckets: trial.buckets,
+            stimuli: [trial.element],
+            rt: rt,
           };
           jsPsych.finishTrial(trial_data);
         }
@@ -224,7 +236,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     });
     
     display_element.appendChild(container);
-    
+    const startTime = performance.now();
   }
 }
 

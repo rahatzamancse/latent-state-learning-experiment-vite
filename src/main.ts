@@ -244,7 +244,7 @@ timeline.push({
 
 const treasure_names = ['Quixot', 'Wyvern', 'Eronimo', 'Rochar', 'Tynix', 'Yrton', 'Urono', 'Izor', 'Oronim', 'Pexis', 'Arctis', 'Syber', 'Dynax', 'Fyxis', 'Gyron', 'Hyxel', 'Jaltra', 'Kavra', 'Lyris'];
 
-const BASKETS = shuffleIndices(4).map(i => [
+const FIRST_BASKETS = [
     {
         color: "blue",
         image: "images/baskets/basket-blue.png",
@@ -265,7 +265,10 @@ const BASKETS = shuffleIndices(4).map(i => [
         image: "images/baskets/basket-yellow.png",
         name: "Golden Repository",
     },
-][i]);
+];
+
+const RANDOMIZE_ACTION_ASSIGNMENTS = true;
+const BASKETS = RANDOMIZE_ACTION_ASSIGNMENTS ? shuffleIndices(4).map(i => FIRST_BASKETS[i]) : FIRST_BASKETS;
 
 const context1_stimulus = [
     [1, "blue"],
@@ -275,6 +278,9 @@ const context1_stimulus = [
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 1,
+    }
 }));
 const context2_stimulus = [
     [5, "red"],
@@ -284,8 +290,27 @@ const context2_stimulus = [
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 2,
+    }
 }));
-const context3_stimulus = [...context1_stimulus, ...context2_stimulus];
+// merge context 1 and context 2, but context: 3 for data
+const context3_stimulus = [
+    [1, "blue"],
+    [2, "blue"],
+    [3, "green"],
+    [4, "green"],
+    [5, "red"],
+    [6, "red"],
+    [7, "yellow"],
+    [8, "yellow"],
+].map(i => ({
+    image: `images/stimulus/animal_${i[0]}.png`,
+    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    data: {
+        context: 3,
+    }
+}));
 
 let currentAssignedTreasure = 0;
 
