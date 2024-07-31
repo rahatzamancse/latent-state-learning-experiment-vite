@@ -16,7 +16,6 @@ import jsPsychPlayAudio from './extension-play-audio';
 // import jsPsychAudioKeyboardResponse from '@jspsych/plugin-audio-keyboard-response';
 import jsPsychCallFunction from '@jspsych/plugin-call-function';
 
-
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
@@ -29,11 +28,11 @@ if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     throw new Error("Firebase API key not found.");
 }
 
-// const DEBUGGING = import.meta.env.VITE_DEBUGGING ? true : false;
-const DEBUGGING = false;
+const DEBUGGING = import.meta.env.VITE_DEBUGGING ? true : false;
+// const DEBUGGING = false;
 const TRACK_EYE = true;
 const UPLOAD_FIRESTORE = DEBUGGING ? false : true;
-const AUDIO = false;
+const AUDIO = true;
 
 // Initialize Extensions
 const extensions = [];
@@ -147,19 +146,19 @@ const all_context_assigned_indices = [0, 0, 0, 0];
 const tutorial_baskets = [
     {
         image: "images/tutorial/buckets/tutorial_basket-1.png",
-        name: "Basket 1",
+        name: "Bag 1",
     },
     {
         image: "images/tutorial/buckets/tutorial_basket-2.png",
-        name: "Basket 2",
+        name: "Bag 2",
     },
     {
         image: "images/tutorial/buckets/tutorial_basket-3.png",
-        name: "Basket 3",
+        name: "Bag 3",
     },
     {
         image: "images/tutorial/buckets/tutorial_basket-4.png",
-        name: "Basket 4",
+        name: "Bag 4",
     },
 ];
 const BASKETS_TMP = [
@@ -197,35 +196,35 @@ const tutorial_stimulus = [
     correct_action: i[1] - 1,
 }));
 const context1_stimulus = [
-    [1, "blue"],
-    [2, "blue"],
-    [3, "green"],
-    [4, "green"],
+    [1, "blue", 0],
+    [2, "blue", 0],
+    [3, "green", 1],
+    [4, "green", 1],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    correct_action: i[2],
 }));
 const context2_stimulus = [
-    [5, "red"],
-    [6, "red"],
-    [7, "yellow"],
-    [8, "yellow"],
+    [5, "red", 0],
+    [6, "red", 0],
+    [7, "yellow", 1],
+    [8, "yellow", 1],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    correct_action: i[2],
 }));
 const context3_stimulus = [
-    [1, "blue"],
-    [2, "blue"],
-    [3, "green"],
-    [4, "green"],
-    [5, "red"],
-    [6, "red"],
-    [7, "yellow"],
-    [8, "yellow"],
+    [1, "blue", 0],
+    [2, "blue", 0],
+    [3, "green", 1],
+    [4, "green", 1],
+    [5, "red", 2],
+    [6, "red", 2],
+    [7, "yellow", 3],
+    [8, "yellow", 3],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
-    correct_action: BASKETS.findIndex(b => b.color === i[1]),
+    correct_action: i[2],
 }));
 
 const rewards = {
@@ -251,20 +250,11 @@ function getStateEstimation() {
         .estimated_state;
 }
 function getLastTrialTreasureName(all_treasure_names: string[]) {
-    // return all_treasure_names[
-    //     jsPsych.data.get()
-    //         .filter({ trial_type: 'html-button-response' })
-    //         .last(1)
-    //         .values()[0]
-    //         ['response']
-    // ];
-    
     return jsPsych.data.get()
         .filter({ trial_type: 'html-button-response' })
         .last(1)
         .values()[0]
         ['estimated_state'];
-
 }
 
 
@@ -284,9 +274,11 @@ timeline.push({
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
         ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
     ],
-    audio: ['intro', 'eye-calibration-intro', 'eye-track-recorded', 'full-screen', 'webgazer-calibration', 'colorland-intro', 'colorland-instructions', 'tutorial-relics', 'tutorial-relics-instructions'].map(a => `audio/${a}.mp3`),
+    audio: ["quest_bag.mp3", "cam_calibration_2.mp3", "cam_calibration.mp3", "colorland_4bags.mp3", "colorland_help.mp3", "colorland.mp3", "context-1-good-job.mp3", "context-2-good-job.mp3", "fullscreen.mp3", "great_job.mp3", "intro_2.mp3", "intro_3.mp3", "intro.mp3", "quest.mp3", "relic1_bag1_2.mp3", "relic1_bag1.mp3", "relic_1.mp3", "relic_2_bag2_2.mp3", "relic_2_bag_2.mp3", "relic_2.mp3", "relic_3_bag3_2.mp3", "relic3_bag3.mp3", "relic_3.mp3", "relic4_bag4_2.mp3", "relic4_bag4.mp3", "relic_4.mp3", "survey-question.mp3", "task.mp3", "webgazer-calibration.mp3"].map(a => `audio/${a}`),
     video: [],
 });
+
+
 
 
 timeline.push({
@@ -320,7 +312,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/eye-track-recorded.mp3',
+                audio_path: 'audio/intro_2.mp3',
             }
         }
     ] : [],
@@ -335,7 +327,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/eye-calibration-intro.mp3',
+                audio_path: 'audio/intro_3.mp3',
             }
         }
     ] : [],
@@ -352,7 +344,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/full-screen.mp3',
+                audio_path: 'audio/fullscreen.mp3',
             }
         }
     ] : [],
@@ -400,6 +392,14 @@ if (TRACK_EYE) {
         stimulus: `<h1>Camera Calibration</h1>
         <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>
         <p>Press any key to continue.</p>`,
+        extensions: AUDIO ? [
+            {
+                type: jsPsychPlayAudio,
+                params: {
+                    audio_path: 'audio/cam_calibration.mp3',
+                }
+            }
+        ] : [],
     })
 
     timeline.push({
@@ -407,6 +407,14 @@ if (TRACK_EYE) {
         stimulus: `<h1>Camera Calibration</h1>
         <p>During the calibration, you will see a few dots on the screen.</p><p>Please look at the dots as they appear.</p><p>Then you need to click them with your mouse.</p>
         <p>Press any key to continue.</p>`,
+        extensions: AUDIO ? [
+            {
+                type: jsPsychPlayAudio,
+                params: {
+                    audio_path: 'audio/cam_calibration_2.mp3',
+                }
+            }
+        ] : [],
     })
 
     timeline.push({
@@ -430,19 +438,19 @@ if (TRACK_EYE) {
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>The Quest for the Lost Relics</h1>
-<p>In a time long forgotten, the kingdom of Eldoria was known for its powerful and enchanting relics.</p><p>These relics, known as the Arcane Crystals, Ethereal Blossoms, Draconic Scales, and Lunar Pearls, were the source of magic that kept the kingdom in harmony.</p><p>Each relic had to be carefully placed in its own unique bag to maintain its magical potency.</p>`,
+<p>In a time long forgotten, the kingdom of Eldoria was known for its powerful and enchanting relics.</p><p>These relics, known as the Arcane Crystals, Ethereal Blossoms, Draconic Scales, and Lunar Pearls, were the source of magic that kept the kingdom in harmony.</p>`,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/tutorial-relics.mp3',
+                audio_path: 'audio/quest.mp3',
             }
         }
     ] : [],
 });
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<p>The wise sages of Eldoria created four special bags, each designed to house one specific relic.</p><p>These bags, known as the Vessels of Power, were hidden throughout the Enchanted Forest to protect the relics from falling into the wrong hands.</p><p>However, over the centuries, the knowledge of their correct bags was lost.</p>
+    stimulus: `<p>The wise sages of Eldoria created four special bags, each designed to house one type of specific relic.</p><p>However, over the centuries, the knowledge of their correct bags was lost.</p>
         <img src="images/tutorial/buckets/tutorial_basket-1.png" width="100px" />
         <img src="images/tutorial/buckets/tutorial_basket-2.png" width="100px" />
         <img src="images/tutorial/buckets/tutorial_basket-3.png" width="100px" />
@@ -451,19 +459,19 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/tutorial-relics-instructions.mp3',
+                audio_path: 'audio/quest_bag.mp3',
             }
         }
     ] : [],
 });
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<p>Your task is to venture into the Enchanted Forest and restore the magic of Eldoria.</p><p>You will be provided with the four Vessels of Power.</p><p>Each vessel must contain only specific types of relics to preserve its magical energy.</p><p>After putting a relic in the correct bag, you will receive a diamond reward.</p><p>If the relic is put into a wrong bag, you will not receive any diamond.</p>`,
+    stimulus: `<p>Your task is to venture into the Enchanted Forest and restore the magic of Eldoria.</p><p>You will be provided with the four bags.</p><p>Each bag must contain only specific types of relics to preserve its magical energy.</p><p>After putting a relic in the correct bag, you will receive a diamond reward.</p><p>If the relic is put into a wrong bag, you will not receive any diamond.</p>`,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/tutorial-relics-instructions.mp3',
+                audio_path: 'audio/task.mp3',
             }
         }
     ] : [],
@@ -478,7 +486,6 @@ const tutorialFixationPoint = {
     roi_radius: 100,
     show_validation_data: DEBUGGING ? true : false,
     data: {
-        tutorial: true,
         my_trial_type: 'fixation-point',
     }
 }
@@ -490,7 +497,7 @@ const tutorialStateEstimation = {
 <p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
 <p>Press the button below to assign the name of the relic.</p>`,
     choices: () => [all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]],
-    data: { tutorial: true, my_trial_type: 'state-estimation' },
+    data: { my_trial_type: 'state-estimation' },
     on_finish: (data: any) => {
         const tutorial_states = all_context_state_names[jsPsych.timelineVariable('context')];
         data.new_state = true;
@@ -510,8 +517,8 @@ const tutorialActionSelection = {
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `This treasure belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
-    data: { tutorial: true, my_trial_type: 'dragndrop' },
+    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
+    data: { my_trial_type: 'dragndrop' },
 };
 const tutorialRewardTrial = {
     type: jsPsychHtmlKeyboardResponse,
@@ -521,11 +528,29 @@ const tutorialRewardTrial = {
     <img src="${rewards.incorrect}" width="500px" /> <p>Oops! You have not earned a magical reward this time. You should drag the relic to the correct bag. </p>`,
     choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
-    data: { tutorial: true, my_trial_type: 'reward' },
+    data: { my_trial_type: 'reward' },
+};
+const tutorialActionSelection2 = {
+    type: jsPsychDragndrop,
+    element: jsPsych.timelineVariable('stimuli_path'),
+    show_element_label: true,
+    element_label: () => getLastTrialTreasureName(all_context_state_names[jsPsych.timelineVariable('context')]),
+    buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
+    show_labels: true,
+    bucket_labels: tutorial_baskets.map(b => b.name),
+    correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
+    track_dragging: true,
+    randomize_bucket_order: false,
+    text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>.`,
+    data: { my_trial_type: 'dragndrop' },
 };
 
 const tutorialCorrectLoop = {
     timeline: [tutorialActionSelection, tutorialRewardTrial],
+    loop_function: () => !getOutcome(),
+};
+const tutorial2CorrectLoop = {
+    timeline: [tutorialActionSelection2, tutorialRewardTrial],
     loop_function: () => !getOutcome(),
 };
 const tutorialProcedure = {
@@ -533,6 +558,8 @@ const tutorialProcedure = {
         ... TRACK_EYE ? [tutorialFixationPoint] : [],
         tutorialStateEstimation,
         tutorialCorrectLoop,
+        ... TRACK_EYE ? [tutorialFixationPoint] : [],
+        tutorial2CorrectLoop,
     ],
     timeline_variables: [
         {
@@ -570,6 +597,10 @@ const tutorialProcedure = {
     ],
     randomize_order: false,
     repetitions: 1,
+    data: {
+        context: 0,
+        tutorial: true,
+    }
 }
 timeline.push(tutorialProcedure);
 
@@ -585,7 +616,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/tutorial-outro.mp3',
+                audio_path: 'audio/great_job.mp3',
             }
         }
     ] : [],
@@ -599,7 +630,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/colorland-intro.mp3',
+                audio_path: 'audio/colorland.mp3',
             }
         }
     ] : [],
@@ -616,7 +647,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/colorland-instructions-1.mp3',
+                audio_path: 'audio/colorland_4bags.mp3',
             }
         }
     ] : [],
@@ -628,7 +659,7 @@ timeline.push({
         {
             type: jsPsychPlayAudio,
             params: {
-                audio_path: 'audio/colorland-instructions-2.mp3',
+                audio_path: 'audio/colorland_help.mp3',
             }
         }
     ] : [],
@@ -658,11 +689,7 @@ const showStimuli = {
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
-                    '#jspsych-dragndrop-bucket-0',
-                    '#jspsych-dragndrop-bucket-1',
-                    '#jspsych-dragndrop-bucket-2',
-                    '#jspsych-dragndrop-bucket-3',
-                    '#jspsych-dragndrop-element',
+                    'img',
                 ],
             }
         }]:[],
@@ -712,11 +739,7 @@ const stateEstimation = {
             type: jsPsychExtensionWebgazer,
             params: {
                 targets: [
-                    '#jspsych-dragndrop-bucket-0',
-                    '#jspsych-dragndrop-bucket-1',
-                    '#jspsych-dragndrop-bucket-2',
-                    '#jspsych-dragndrop-bucket-3',
-                    '#jspsych-dragndrop-element',
+                    'img',
                 ],
             }
         }]:[],
@@ -812,7 +835,7 @@ const context1Procedure = {
         }
     )),
     randomize_order: true,
-    repetitions: 1,
+    repetitions: 3,
     data: { context: 1 },
 }
 timeline.push(context1Procedure);
@@ -823,6 +846,14 @@ timeline.push({
     stimulus: `<h1>Good job!</h1>
 <p>You have sorted the first set of treasures.</p><p>Now, you will be presented with a new set of treasures. Best of luck!</p>
 <p>Press any key to continue.</p>`,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/context-1-good-job.mp3',
+            }
+        }
+    ] : [],
 })
 
 // Context 2
@@ -840,13 +871,13 @@ const context2Procedure = {
             stimuli: `<img src="${context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
             correct_bucket_index: context2_stimulus[i].correct_action,
             stimuli_path: context2_stimulus[i].image,
-            context: 2, 
+            context: 2,
             buckets: [BASKETS[2], BASKETS[3]],
             bucket_start_angle: 90,
         }
     )),
     randomize_order: true,
-    repetitions: 1,
+    repetitions: 3,
     data: { context: 2 },
 }
 timeline.push(context2Procedure);
@@ -858,6 +889,14 @@ timeline.push({
 <p>You have sorted the second set of treasures!</p>
 <p>At the last stage, you will encounter all the treasures you have seen so far throughout Colorland.</p><p>The fate of colorland depends on you. Best of luck!</p>
 <p>Press any key to continue.</p>`,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/context-2-good-job.mp3',
+            }
+        }
+    ] : [],
 })
 
 // Populate context 3 state names
@@ -893,7 +932,7 @@ const context3Procedure = {
         }
     )),
     randomize_order: true,
-    repetitions: 1,
+    repetitions: 3,
     data: { context: 3 },
 }
 timeline.push(context3Procedure);
@@ -911,6 +950,14 @@ timeline.push({
             horizontal: true
         },
     ],
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/survey-question.mp3',
+            }
+        }
+    ] : [],
 })
 
 
