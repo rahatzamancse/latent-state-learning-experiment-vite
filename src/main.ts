@@ -195,9 +195,6 @@ const tutorial_stimulus = [
 ].map(i => ({
     image: `images/tutorial/stimulus/tutorial_treasures-${i[0]}.png`,
     correct_action: i[1] - 1,
-    data: {
-        tutorial: true,
-    }
 }));
 const context1_stimulus = [
     [1, "blue"],
@@ -207,9 +204,6 @@ const context1_stimulus = [
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 1,
-    }
 }));
 const context2_stimulus = [
     [5, "red"],
@@ -219,9 +213,6 @@ const context2_stimulus = [
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 2,
-    }
 }));
 const context3_stimulus = [
     [1, "blue"],
@@ -235,9 +226,6 @@ const context3_stimulus = [
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
-    data: {
-        context: 3,
-    }
 }));
 const all_context_stimulus = [
     tutorial_stimulus,
@@ -495,6 +483,10 @@ const tutorialFixationPoint = {
     validation_point_coordinates: 'center-offset-pixels',
     roi_radius: 100,
     show_validation_data: DEBUGGING ? true : false,
+    data: {
+        tutorial: true,
+        my_trial_type: 'fixation-point',
+    }
 }
 
 const tutorialStateEstimation = {
@@ -504,7 +496,7 @@ const tutorialStateEstimation = {
 <p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
 <p>Press the button below to assign the name of the relic.</p>`,
     choices: () => [all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]],
-    data: { tutorial: true },
+    data: { tutorial: true, my_trial_type: 'state-estimation' },
     on_finish: (data: any) => {
         const tutorial_states = all_context_state_names[jsPsych.timelineVariable('context')];
         data.new_state = true;
@@ -525,7 +517,7 @@ const tutorialActionSelection = {
     track_dragging: true,
     randomize_bucket_order: false,
     text_prompt: () => `This treasure belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
-    data: { tutorial: true },
+    data: { tutorial: true, my_trial_type: 'dragndrop' },
 };
 const tutorialRewardTrial = {
     type: jsPsychHtmlKeyboardResponse,
@@ -535,6 +527,7 @@ const tutorialRewardTrial = {
     <img src="${rewards.incorrect}" width="500px" /> <p>Oops! You have not earned a magical reward this time. You should drag the relic to the correct bag. </p>`,
     choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
+    data: { tutorial: true, my_trial_type: 'reward' },
 };
 
 const tutorialCorrectLoop = {
@@ -658,6 +651,7 @@ const fixationPoint = {
     validation_points: [[0, 0]],
     validation_point_coordinates: 'center-offset-pixels',
     roi_radius: 100,
+    data: { my_trial_type: 'fixation-point' },
 }
 
 const showStimuli = {
@@ -682,6 +676,7 @@ const showStimuli = {
             type: jsPsychExtensionMouseTracking,
         }
     ],
+    data: { my_trial_type: 'show-stimuli' },
 }
 
 let choiceOrders: number[] = [];
@@ -735,6 +730,7 @@ const stateEstimation = {
             type: jsPsychExtensionMouseTracking,
         }
     ],
+    data: { my_trial_type: 'state-estimation' },
 }
 const showIfNewState = {
     timeline: [{
@@ -789,6 +785,7 @@ const actionSelection = {
             }
         }
     ],
+    data: { my_trial_type: 'dragndrop' },
 }
 
 const rewardTrial = {
@@ -797,6 +794,7 @@ const rewardTrial = {
     <img src="${rewards.correct}" width="500px" />` : `<img src="${rewards.incorrect}" width="500px" />`,
     choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
+    data: { my_trial_type: 'reward' },
 };
 
 // Context 1
@@ -821,6 +819,7 @@ const context1Procedure = {
     )),
     randomize_order: true,
     repetitions: 1,
+    data: { context: 1 },
 }
 timeline.push(context1Procedure);
 
@@ -854,6 +853,7 @@ const context2Procedure = {
     )),
     randomize_order: true,
     repetitions: 1,
+    data: { context: 2 },
 }
 timeline.push(context2Procedure);
 
@@ -900,6 +900,7 @@ const context3Procedure = {
     )),
     randomize_order: true,
     repetitions: 1,
+    data: { context: 3 },
 }
 timeline.push(context3Procedure);
 
