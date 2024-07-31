@@ -227,12 +227,6 @@ const context3_stimulus = [
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: BASKETS.findIndex(b => b.color === i[1]),
 }));
-const all_context_stimulus = [
-    tutorial_stimulus,
-    context1_stimulus,
-    context2_stimulus,
-    context3_stimulus,
-];
 
 const rewards = {
     correct: "images/reward/diamond.png",
