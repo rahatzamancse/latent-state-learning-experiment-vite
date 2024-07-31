@@ -93,7 +93,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     
     // calculate the center in the screen
     const center_x = window.innerWidth / 2;
-    const center_y = window.innerHeight / 2;
+    const center_y = window.innerHeight / 2 - 100;
     
     // calculate the position for each draggable element with radius, angle, and center. The first bucket is at 0 degrees, the second at 360/num_buckets degrees, and so on.
     const num_buckets = trial.buckets.length;
