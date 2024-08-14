@@ -32,10 +32,6 @@ const info = <const>{
       type: ParameterType.STRING,
       default: "",
     },
-    radius: {
-      type: ParameterType.INT,
-      default: 400,
-    },
     track_dragging: {
       type: ParameterType.BOOL,
       default: false,
@@ -91,19 +87,37 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     </div>
     `;
     
-    // calculate the center in the screen
+    // calculate the screen
+    const BOTTOM_MARGIN = 120;
     const center_x = window.innerWidth / 2;
-    const center_y = window.innerHeight / 2 - 100;
+    const center_y = window.innerHeight / 2 - BOTTOM_MARGIN;
+    const DRAGGABLE_SIZE_RATIO = 0.16;
+    const DROPPABLE_SIZE_RATIO = 0.16;
+    const box_size = Math.min(
+      window.innerWidth - window.innerWidth*DROPPABLE_SIZE_RATIO,
+      window.innerHeight - BOTTOM_MARGIN - (window.innerHeight-BOTTOM_MARGIN)*DROPPABLE_SIZE_RATIO
+    );
+    const draggable_size = box_size * DRAGGABLE_SIZE_RATIO;
+    const droppable_size = box_size * DROPPABLE_SIZE_RATIO;
     
     // calculate the position for each draggable element with radius, angle, and center. The first bucket is at 0 degrees, the second at 360/num_buckets degrees, and so on.
     const num_buckets = trial.buckets.length;
     const angle = 360 / num_buckets;
-    const radius = trial.radius!;
-    const draggable_xs: number[] = [];
-    const draggable_ys: number[] = [];
+    // const radius = trial.radius!;
+    const radius = box_size / 2 - droppable_size/2;
+    const droppable_xs: number[] = [];
+    const droppable_ys: number[] = [];
     for (let i = 0; i < num_buckets; i++) {
-      draggable_xs.push(center_x + radius * Math.cos(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180));
-      draggable_ys.push(center_y + radius * Math.sin(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180));
+      droppable_xs.push(
+        center_x 
+        + radius * Math.cos(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180)
+        - droppable_size/2
+      );
+      droppable_ys.push(
+        center_y + 
+        radius * Math.sin(((angle * i + trial.bucket_start_angle!) * Math.PI) / 180)
+        - droppable_size/2
+      );
     }
     // set text prompt at the bottom
     container.innerHTML += `
@@ -118,9 +132,9 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     container.innerHTML += `
       <style>
         .jspsych-dragndrop-bucket {
-          width: 200px;
-          height: 200px;
-          display: inline-block;
+          width: ${droppable_size}px;
+          height: ${droppable_size}px;
+          display: block;
           margin: 10px;
           border: 1px solid #aaa;
           position: absolute;
@@ -130,8 +144,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
           height: 100%;
         }
         .jspsych-dragndrop-element {
-          width: 200px;
-          height: 200px;
+          width: ${draggable_size}px;
+          height: ${draggable_size}px;
           position: absolute;
           z-index: 10;
           cursor: pointer;
@@ -149,14 +163,14 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
     for (let i = 0; i < num_buckets; i++) {
       const randomIdx = randomBucketIdxs[i];
       const bucket = container.querySelector(`#jspsych-dragndrop-bucket-${randomIdx}`) as HTMLElement;
-      bucket.style.left = draggable_xs[i] - 100 + "px";
-      bucket.style.top = draggable_ys[i] - 100 + "px";
+      bucket.style.left = droppable_xs[i] + "px";
+      bucket.style.top = droppable_ys[i] + "px";
     }
     
     // make the element draggable
     const element = container.querySelector("#jspsych-dragndrop-element") as HTMLElement;
-    element.style.left = center_x - 100 + "px";
-    element.style.top = center_y - 100 + "px";
+    element.style.left = center_x - draggable_size/2 + "px";
+    element.style.top = center_y - draggable_size/2 + "px";
     
     // make element draggable to each bucket
     element.addEventListener("mousedown", (e) => {
@@ -205,8 +219,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
         // reset the position of the element with smooth transition
         if(droppedInBucketIndex === null) {
           element.style.transition = "left 0.5s, top 0.5s";
-          element.style.left = center_x - 100 + "px";
-          element.style.top = center_y - 100 + "px";
+          element.style.left = center_x - draggable_size/2 + "px";
+          element.style.top = center_y - draggable_size/2 + "px";
           setTimeout(() => {
             element.style.transition = "";
           }, 500);
@@ -220,8 +234,8 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
               {
                 name: [trial.buckets[i]],
                 position: randomBucketIdxs[i],
-                x: draggable_xs[i],
-                y: draggable_ys[i],
+                x: droppable_xs[i],
+                y: droppable_ys[i],
                 dropped: droppedInBucketIndex === i,
               }
             )),

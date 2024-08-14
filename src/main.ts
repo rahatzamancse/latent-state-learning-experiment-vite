@@ -5,13 +5,13 @@ import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
 import jsPsychWebgazerCalibrate from '@jspsych/plugin-webgazer-calibrate';
 import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
 import jsPsychPreload from '@jspsych/plugin-preload';
-import jsPsychHtmlKeyboardResponse from '@jspsych/plugin-html-keyboard-response';
+import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response';
 // import jsPsychInstructions from '@jspsych/plugin-instructions';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
-import jsPsychHtmlButtonResponse from '@jspsych/plugin-html-button-response';
+import jsPsychHtmlButtonResponse from './plugins/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
-import jsPsychDragndrop from './plugin-dragndrop';
+import jsPsychDragndrop from './plugins/plugin-dragndrop';
 import jsPsychPlayAudio from './extension-play-audio';
 // import jsPsychAudioKeyboardResponse from '@jspsych/plugin-audio-keyboard-response';
 import jsPsychCallFunction from '@jspsych/plugin-call-function';
@@ -92,7 +92,30 @@ if (UPLOAD_FIRESTORE) {
 const jsPsych = initJsPsych({
     extensions: extensions,
     on_data_update: (data: any) => {
+        // check if fullscreen
+        // const interaction_data = jsPsych.data.getInteractionData();
+        // const blur_events = interaction_data.filter({ event: 'blur' });
+        // const focus_events = interaction_data.filter({ event: 'focus' });
+        // const fullscreenenter_events = interaction_data.filter({ event: 'fullscreenenter' });
+        // const fullscreenexit_events = interaction_data.filter({ event: 'fullscreenexit' });
+        // jsPsych.data.get().addToLast({ interactions: interaction_data.csv() });
+        // jsPsych.data.get().addToLast({ blur_events: blur_events.csv() });
+        // jsPsych.data.get().addToLast({ focus_events: focus_events.csv() });
+        // jsPsych.data.get().addToLast({ fullscreenenter_events: fullscreenenter_events.csv() });
+        // jsPsych.data.get().addToLast({ fullscreenexit_events: fullscreenexit_events.csv() });
+        // 
+
+
+
+
+
+
         const trialData = JSON.parse(JSON.stringify(data));
+        // check if trialData has a property 'no_upload' and if it is true
+        if (trialData.no_upload) {
+            delete trialData.no_upload;
+            return trialData;
+        }
         function convertNestedArrays(obj: any) {
             for (const key in obj) {
                 if (Array.isArray(obj[key])) {
@@ -118,7 +141,7 @@ const jsPsych = initJsPsych({
         else {
             console.log("Dry run: ", trialData);
         }
-        return {};
+        return trialData;
     },
     on_finish: () => {
         console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
@@ -257,15 +280,44 @@ function getLastTrialTreasureName(all_treasure_names: string[]) {
         ['estimated_state'];
 }
 
+const AUDIO_DURATIONS = {
+    cam_calibration: 8,
+    cam_calibration_2: 10,
+    colorland: 19,
+    colorland_4bags: 11,
+    colorland_help: 14,
+    context_1_good_job: 9,
+    context_2_good_job: 14,
+    fullscreen: 7,
+    great_job: 16,
+    intro: 4,
+    intro_2: 8,
+    intro_3: 11,
+    quest: 17,
+    quest_bag: 13,
+    relic1_bag1: 6,
+    relic1_bag1_2: 7,
+    relic3_bag3: 10,
+    relic4_bag4: 10,
+    relic4_bag4_2: 7,
+    relic_1: 10,
+    relic_2: 10,
+    relic_3: 7,
+    relic2_bag2: 6,
+    relic_3_bag3_2: 6,
+    relic_4: 10,
+    survey_question: 11,
+    task: 20,
+    webgazer_calibration: 5,
+}
+
 
 
 const STIMULI_SIZE = 0.5;
 // const BUCKET_SIZE = 200;
 
-const timeline = [];
-
 // Preload assets
-timeline.push({
+const preload = {
     type: jsPsychPreload,
     images: [
         ...["blue", "green", "red", "yellow"].map(c => `images/baskets/basket-${c}.png`),
@@ -274,23 +326,22 @@ timeline.push({
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
         ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
     ],
-    audio: ["quest_bag.mp3", "cam_calibration_2.mp3", "cam_calibration.mp3", "colorland_4bags.mp3", "colorland_help.mp3", "colorland.mp3", "context-1-good-job.mp3", "context-2-good-job.mp3", "fullscreen.mp3", "great_job.mp3", "intro_2.mp3", "intro_3.mp3", "intro.mp3", "quest.mp3", "relic1_bag1_2.mp3", "relic1_bag1.mp3", "relic_1.mp3", "relic_2_bag2_2.mp3", "relic_2_bag_2.mp3", "relic_2.mp3", "relic_3_bag3_2.mp3", "relic3_bag3.mp3", "relic_3.mp3", "relic4_bag4_2.mp3", "relic4_bag4.mp3", "relic_4.mp3", "survey-question.mp3", "task.mp3", "webgazer-calibration.mp3"].map(a => `audio/${a}`),
+    audio: ["quest_bag.mp3", "cam_calibration_2.mp3", "cam_calibration.mp3", "colorland_4bags.mp3", "colorland_help.mp3", "colorland.mp3", "context-1-good-job.mp3", "context-2-good-job.mp3", "fullscreen.mp3", "great_job.mp3", "intro_2.mp3", "intro_3.mp3", "intro.mp3", "quest.mp3", "relic1_bag1_2.mp3", "relic1_bag1.mp3", "relic_1.mp3", "relic_2_bag2_2.mp3", "relic_2_bag_2.mp3", "relic_2.mp3", "relic_3_bag3_2.mp3", "relic3_bag3.mp3", "relic_3.mp3", "relic4_bag4_2.mp3", "relic4_bag4.mp3", "relic_4.mp3", "survey-question.mp3", "task.mp3", "webgazer-calibration.mp3", "camtest.mp3"].map(a => `audio/${a}`),
     video: [],
-});
+};
 
 
-
-
-timeline.push({
+const welcome = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Welcome to the experiment!</h1><p>Press any key to continue.</p>`,
-})
+}
 
-timeline.push({
+const experiment_information = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Experiment</h1>
 <p>In this experiment, you will play a treasure sorting game.</p>
     <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro * 1000,
     trial_duration: 10000,
     extensions: AUDIO ? [
         {
@@ -300,14 +351,15 @@ timeline.push({
             }
         }
     ]: [],
-})
+}
 
 
-timeline.push({
+const recording_info = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Experiment</h1>
 <p>During the playing, your activity and eye movements will be recorded.</p><p>However, your video will not be recorded.</p>
     <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_2 * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -316,13 +368,14 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
-timeline.push({
+const eye_calibration_intro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Experiment</h1>
 <p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions properly to help us get the most accurate experiment results.</p>
     <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_3 * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -331,15 +384,16 @@ timeline.push({
             }
         }
     ] : [],
-});
+};
 
 
 // Switch to fullscreen
-timeline.push({
+const fullscreen = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Fullscreen</h1>
 <p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>
 <p>Press any key to fullscreen and continue to camera calibration.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.fullscreen * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -348,15 +402,10 @@ timeline.push({
             }
         }
     ] : [],
-})
-if (!DEBUGGING)
-    timeline.push({
-        type: jsPsychFullscreen,
-        fullscreen_mode: true,
-    });
+}
 // TODO: Always validate if the fullscreen is enabled, if not, ask them again to go fullscreen or cancel the experiment.
 
-timeline.push({
+const browser_check = {
     type: jsPsychBrowserCheck,
     minimum_width: 1000,
     minimum_height: 600,
@@ -372,73 +421,81 @@ timeline.push({
             return '<p>Your screen is too small to participate in this experiment. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
         }
     },
-})
+}
 
 
-// initialize eye tracking
-if (TRACK_EYE) {
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        trial_duration: 2000,
-        stimulus: `<h1>Please allow camera access for eye tracking.</h1><h1><span style="color: red">No video will be recorded.</span> </h1>`
-    })
+const cam_warning = {
+    type: jsPsychHtmlKeyboardResponse,
+    trial_duration: 2000,
+    stimulus: `<h1>Please allow camera access for eye tracking.</h1><h1><span style="color: red">No video will be recorded.</span> </h1>`
+}
 
-    timeline.push({
-        type: jsPsychWebgazerInitCamera,
-    })
-
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<h1>Camera Calibration</h1>
-        <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>
-        <p>Press any key to continue.</p>`,
-        extensions: AUDIO ? [
-            {
-                type: jsPsychPlayAudio,
-                params: {
-                    audio_path: 'audio/cam_calibration.mp3',
-                }
+const cam_check = {
+    type: jsPsychWebgazerInitCamera,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/camtest.mp3',
             }
-        ] : [],
-    })
+        }
+    ] : [],
+}
 
-    timeline.push({
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: `<h1>Camera Calibration</h1>
-        <p>During the calibration, you will see a few dots on the screen.</p><p>Please look at the dots as they appear.</p><p>Then you need to click them with your mouse.</p>
-        <p>Press any key to continue.</p>`,
-        extensions: AUDIO ? [
-            {
-                type: jsPsychPlayAudio,
-                params: {
-                    audio_path: 'audio/cam_calibration_2.mp3',
-                }
+const calibration_guide = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Camera Calibration</h1>
+    <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>
+    <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration * 1000,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/cam_calibration.mp3',
             }
-        ] : [],
-    })
+        }
+    ] : [],
+}
 
-    timeline.push({
-        type: jsPsychWebgazerCalibrate,
-        calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
-        calibration_mode: 'click',
-        randomize_calibration_order: true,
-        extensions: AUDIO ? [
-            {
-                type: jsPsychPlayAudio,
-                params: {
-                    audio_path: 'audio/webgazer-calibration.mp3',
-                }
+const cam_calibration = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<h1>Camera Calibration</h1>
+    <p>During the calibration, you will see a few dots on the screen.</p><p>Please look at the dots as they appear.</p><p>Then you need to click them with your mouse.</p>
+    <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration_2 * 1000,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/cam_calibration_2.mp3',
             }
-        ] : [],
-    })
+        }
+    ] : [],
+}
+
+const calibration_points = {
+    type: jsPsychWebgazerCalibrate,
+    calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
+    calibration_mode: 'click',
+    randomize_calibration_order: true,
+    extensions: AUDIO ? [
+        {
+            type: jsPsychPlayAudio,
+            params: {
+                audio_path: 'audio/webgazer-calibration.mp3',
+            }
+        }
+    ] : [],
 }
 
 
 // Welcome screen
-timeline.push({
+const tutorial_welcome = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>The Quest for the Lost Relics</h1>
 <p>In a time long forgotten, the kingdom of Eldoria was known for its powerful and enchanting relics.</p><p>These relics, known as the Arcane Crystals, Ethereal Blossoms, Draconic Scales, and Lunar Pearls, were the source of magic that kept the kingdom in harmony.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -447,14 +504,15 @@ timeline.push({
             }
         }
     ] : [],
-});
-timeline.push({
+};
+const tutorial_intro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<p>The wise sages of Eldoria created four special bags, each designed to house one type of specific relic.</p><p>However, over the centuries, the knowledge of their correct bags was lost.</p>
-        <img src="images/tutorial/buckets/tutorial_basket-1.png" width="100px" />
-        <img src="images/tutorial/buckets/tutorial_basket-2.png" width="100px" />
-        <img src="images/tutorial/buckets/tutorial_basket-3.png" width="100px" />
-        <img src="images/tutorial/buckets/tutorial_basket-4.png" width="100px" />`,
+        <img src="images/tutorial/buckets/tutorial_basket-1.png" width="10%" />
+        <img src="images/tutorial/buckets/tutorial_basket-2.png" width="10%" />
+        <img src="images/tutorial/buckets/tutorial_basket-3.png" width="10%" />
+        <img src="images/tutorial/buckets/tutorial_basket-4.png" width="10%" />`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest_bag * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -463,10 +521,11 @@ timeline.push({
             }
         }
     ] : [],
-});
-timeline.push({
+};
+const tutorial_task = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<p>Your task is to venture into the Enchanted Forest and restore the magic of Eldoria.</p><p>You will be provided with the four bags.</p><p>Each bag must contain only specific types of relics to preserve its magical energy.</p><p>After putting a relic in the correct bag, you will receive a diamond reward.</p><p>If the relic is put into a wrong bag, you will not receive any diamond.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.task * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -475,7 +534,7 @@ timeline.push({
             }
         }
     ] : [],
-});
+};
 
 
 // Tutorial start
@@ -492,7 +551,7 @@ const tutorialFixationPoint = {
 
 const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
+    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 100}%" />
 <p>This is ${jsPsych.timelineVariable('correct_bucket_index') == 0 ? "a" : "another"} relic. </p>
 <p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
 <p>Press the button below to assign the name of the relic.</p>`,
@@ -503,7 +562,15 @@ const tutorialStateEstimation = {
         data.new_state = true;
         all_context_assigned_indices[jsPsych.timelineVariable('context')]++;
         data.estimated_state = tutorial_states[jsPsych.timelineVariable('correct_bucket_index')];
-    }
+    },
+    // extensions: [
+    //     ... AUDIO ? [{
+    //         type: jsPsychPlayAudio,
+    //         params: {
+    //             audio_path: 'audio/relic_1.mp3',
+    //         }
+    //     }] : [],
+    // ],
 }
 
 const tutorialActionSelection = {
@@ -519,13 +586,21 @@ const tutorialActionSelection = {
     randomize_bucket_order: false,
     text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
     data: { my_trial_type: 'dragndrop' },
+    // extensions: [
+    //     ... AUDIO ? [{
+    //         type: jsPsychPlayAudio,
+    //         params: {
+    //             audio_path: 'audio/relic_1.mp3',
+    //         }
+    //     }] : [],
+    // ],
 };
 const tutorialRewardTrial = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: () => getOutcome() ? `
-    <img src="${rewards.correct}" width="500px" />
+    <img src="${rewards.correct}" width="30%" />
     <p>Well done! You have earned a magical reward!</p>` : `
-    <img src="${rewards.incorrect}" width="500px" /> <p>Oops! You have not earned a magical reward this time. You should drag the relic to the correct bag. </p>`,
+    <img src="${rewards.incorrect}" width="30%" /> <p>Oops! You have not earned a magical reward this time. You should drag the relic to the correct bag. </p>`,
     choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
     data: { my_trial_type: 'reward' },
@@ -602,16 +677,16 @@ const tutorialProcedure = {
         tutorial: true,
     }
 }
-timeline.push(tutorialProcedure);
 
 
 // Main Experiment intro
-timeline.push({
+const tutorial_outro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Great job!</h1>
 <p>You have successfully completed the tutorial. Now, you will be presented with the main experimental game.</p>
 <p>This time you won't know where to drag each element. You have to do that based on your assumption.</p>
 <p>Press any key to continue.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.great_job * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -620,12 +695,13 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
-timeline.push({
+const main_game_intro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>The Lost Treasures of Colorland</h1>
 <p>Welcome to Colorland, a vibrant kingdom where every shape, color, and pattern contributes to its festivals.</p><p>This year, a whirlwind has mixed up all the decorations needed for the grand Festival of Patterns.</p><p>Without these decorations in their right places, the festival cannot start.</p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -634,15 +710,16 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
-timeline.push({
+const main_game_intro2 = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<p>To save the Festival of Patterns, we need your special skills.</p><p>We have four magical buckets, each dedicated to collecting specific types of festival decorations.</p>
-        <img src="images/baskets/basket-blue.png" width="100px" />
-        <img src="images/baskets/basket-green.png" width="100px" />
-        <img src="images/baskets/basket-red.png" width="100px" />
-        <img src="images/baskets/basket-yellow.png" width="100px" />`,
+        <img src="images/baskets/basket-blue.png" width="10%" />
+        <img src="images/baskets/basket-green.png" width="10%" />
+        <img src="images/baskets/basket-red.png" width="10%" />
+        <img src="images/baskets/basket-yellow.png" width="10%" />`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_4bags * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -651,10 +728,11 @@ timeline.push({
             }
         }
     ] : [],
-})
-timeline.push({
+}
+const main_game_intro3 = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<p>Here’s how you can help: We will show you one special decoration at a time.</p><p>You need to assign name for that treasure, and then drop it in the right bucket.</p><p>If you place it correctly, a magical reward will appear! </p>`,
+    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_help * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -663,11 +741,11 @@ timeline.push({
             }
         }
     ] : [],
-})
-timeline.push({
+}
+const main_game_intro4 = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Let the Treasure Hunting Begin!</h1><p>Press any key to start the game.</p>`,
-})
+}
 
 
 
@@ -679,32 +757,12 @@ const fixationPoint = {
     data: { my_trial_type: 'fixation-point' },
 }
 
-const showStimuli = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: jsPsych.timelineVariable('stimuli'),
-    trial_duration: 4000,
-    choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
-    extensions: [ 
-        ... TRACK_EYE ? [{
-            type: jsPsychExtensionWebgazer,
-            params: {
-                targets: [
-                    'img',
-                ],
-            }
-        }]:[],
-        {
-            type: jsPsychExtensionMouseTracking,
-        }
-    ],
-    data: { my_trial_type: 'show-stimuli' },
-}
-
 let choiceOrders: number[] = [];
 
 const stateEstimation = {
     type: jsPsychHtmlButtonResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
+    show_button_after: 4000, 
     on_start: (trial: any) => {
         const shuffleResult = getShuffledArray(
             all_context_state_names[jsPsych.timelineVariable('context')]
@@ -808,7 +866,7 @@ const actionSelection = {
 const rewardTrial = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: () => getOutcome() ? `
-    <img src="${rewards.correct}" width="500px" />` : `<img src="${rewards.incorrect}" width="500px" />`,
+    <img src="${rewards.correct}" width="30%" />` : `<img src="${rewards.incorrect}" width="30%" />`,
     choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
     trial_duration: 2000,
     data: { my_trial_type: 'reward' },
@@ -818,7 +876,6 @@ const rewardTrial = {
 const context1Procedure = {
     timeline: [
         ... TRACK_EYE ? [fixationPoint] : [],
-        showStimuli,
         stateEstimation,
         showIfNewState,
         actionSelection,
@@ -838,10 +895,9 @@ const context1Procedure = {
     repetitions: 3,
     data: { context: 1 },
 }
-timeline.push(context1Procedure);
 
 // Context 2 Intro
-timeline.push({
+const context2Intro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Good job!</h1>
 <p>You have sorted the first set of treasures.</p><p>Now, you will be presented with a new set of treasures. Best of luck!</p>
@@ -854,13 +910,12 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
 // Context 2
 const context2Procedure = {
     timeline: [
         ... TRACK_EYE ? [fixationPoint] : [],
-        showStimuli,
         stateEstimation,
         showIfNewState,
         actionSelection,
@@ -880,14 +935,15 @@ const context2Procedure = {
     repetitions: 3,
     data: { context: 2 },
 }
-timeline.push(context2Procedure);
 
 // Context 3 Intro
-timeline.push({
+const context3Intro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Good job!</h1>
 <p>You have sorted the second set of treasures!</p>
-<p>At the last stage, you will encounter all the treasures you have seen so far throughout Colorland.</p><p>The fate of colorland depends on you. Best of luck!</p>
+<p>At the last stage, you will encounter all the treasures you have seen so far throughout Colorland.</p>
+<p>As you are already familiar with these treasures, we will not show any reward feedback.</p>
+<p>The fate of colorland depends on you. Best of luck!</p>
 <p>Press any key to continue.</p>`,
     extensions: AUDIO ? [
         {
@@ -897,10 +953,10 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
 // Populate context 3 state names
-timeline.push({
+const populate_context3_state_names = {
     type: jsPsychCallFunction,
     func: () => {
         // the the used context 1 and context 2 states to the last context
@@ -909,17 +965,16 @@ timeline.push({
         
         all_context_assigned_indices[3] = all_context_assigned_indices[1] + all_context_assigned_indices[2] + 2;
     }
-});
+};
 
 // Context 3
 const context3Procedure = {
     timeline: [
         ... TRACK_EYE ? [fixationPoint] : [],
-        showStimuli,
         stateEstimation,
         showIfNewState,
         actionSelection,
-        rewardTrial,
+        // rewardTrial,
     ],
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
         {
@@ -935,10 +990,9 @@ const context3Procedure = {
     repetitions: 3,
     data: { context: 3 },
 }
-timeline.push(context3Procedure);
 
 
-timeline.push({
+const stateSurvey = {
     type: jsPsychSurveyMultiSelect,
     questions: [
         {
@@ -958,14 +1012,58 @@ timeline.push({
             }
         }
     ] : [],
-})
+}
 
 
 // outro
-timeline.push({
+const outro = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `<h1>Thank you for playing and participating in this experiment!</h1><p>You may now close the window.</p>`,
-});
+};
+
+
+const timeline = [
+    preload,
+    welcome,
+    browser_check,
+    experiment_information,
+    recording_info,
+    eye_calibration_intro,
+
+    fullscreen,
+    ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+
+    ... TRACK_EYE ? [
+        cam_warning,
+        cam_check,
+        calibration_guide,
+        cam_calibration,
+        calibration_points,
+    ] : [],
+    
+    tutorial_welcome,
+    tutorial_intro,
+    tutorial_task,
+    tutorialProcedure,
+    tutorial_outro,
+    
+    main_game_intro,
+    main_game_intro2,
+    main_game_intro3,
+    main_game_intro4,
+    
+    context1Procedure,
+    context2Intro,
+    context2Procedure,
+    context3Intro,
+    populate_context3_state_names,
+    context3Procedure,
+    
+    stateSurvey,
+    outro,
+
+    ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: false }],
+];
 
 
 jsPsych.run(timeline);
