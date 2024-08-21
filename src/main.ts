@@ -1,4 +1,4 @@
-import { initJsPsych } from 'jspsych';
+import { initJsPsych, type JsPsych } from 'jspsych';
 import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
 import jsPsychExtensionMouseTracking from '@jspsych/extension-mouse-tracking';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
@@ -9,10 +9,12 @@ import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response
 // import jsPsychInstructions from '@jspsych/plugin-instructions';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
+import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
 import jsPsychHtmlButtonResponse from './plugins/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
 import jsPsychDragndrop from './plugins/plugin-dragndrop';
-import jsPsychPlayAudio from './extension-play-audio';
+import jsPsychPlayAudio from './extensions/extension-play-audio';
+import jsPsychHelpButton from './extensions/extension-help-button';
 // import jsPsychAudioKeyboardResponse from '@jspsych/plugin-audio-keyboard-response';
 import jsPsychCallFunction from '@jspsych/plugin-call-function';
 
@@ -49,6 +51,10 @@ extensions.push({
     params: {
         minimum_sample_time: 100,
     }
+})
+extensions.push({
+    type: jsPsychHelpButton,
+    params: {}
 })
 if (AUDIO)
     extensions.push({
@@ -93,21 +99,14 @@ const jsPsych = initJsPsych({
     extensions: extensions,
     on_data_update: (data: any) => {
         // check if fullscreen
-        // const interaction_data = jsPsych.data.getInteractionData();
-        // const blur_events = interaction_data.filter({ event: 'blur' });
-        // const focus_events = interaction_data.filter({ event: 'focus' });
-        // const fullscreenenter_events = interaction_data.filter({ event: 'fullscreenenter' });
-        // const fullscreenexit_events = interaction_data.filter({ event: 'fullscreenexit' });
-        // jsPsych.data.get().addToLast({ interactions: interaction_data.csv() });
-        // jsPsych.data.get().addToLast({ blur_events: blur_events.csv() });
-        // jsPsych.data.get().addToLast({ focus_events: focus_events.csv() });
-        // jsPsych.data.get().addToLast({ fullscreenenter_events: fullscreenenter_events.csv() });
-        // jsPsych.data.get().addToLast({ fullscreenexit_events: fullscreenexit_events.csv() });
-        // 
-
-
-
-
+        const interaction_data = jsPsych.data.getInteractionData()
+        // jsPsych.data.get().addToLast({ interactions: interaction_data.csv() })
+        // jsPsych.data.get().addToLast({ blur_events: blur_events.csv() })
+        // jsPsych.data.get().addToLast({ focus_events: focus_events.csv() })
+        // jsPsych.data.get().addToLast({ fullscreenenter_events: fullscreenenter_events.csv() })
+        // jsPsych.data.get().addToLast({ fullscreenexit_events: fullscreenexit_events.csv() })
+        
+        console.log("interaction_data", interaction_data.values());
 
 
         const trialData = JSON.parse(JSON.stringify(data));
@@ -312,7 +311,6 @@ const AUDIO_DURATIONS = {
 }
 
 
-
 const STIMULI_SIZE = 0.5;
 // const BUCKET_SIZE = 200;
 
@@ -331,35 +329,41 @@ const preload = {
 };
 
 
+const TUTORIAL_CONTENT = `<p style="font-size: 2vh">At the center, you will see the treasure. You can use your mouse to drag and drop it in any of the treasure baskets.</p>
+<p style="font-size: 2vh">Here is a small demonstration.</p>
+<div style="display: flex; justify-content: center; background-color: white">
+    <img src="images/modal/dragndrop-tutorial.gif" height="80%" alt="dragndrop-tutorial" />
+</div>`;
+
 const welcome = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>Welcome to the experiment!</h1><p>Press any key to continue.</p>`,
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Welcome to the experiment!</h1>`,
+    choices: ["Continue"],
 }
 
 const experiment_information = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>In this experiment, you will play a treasure sorting game.</p>
-    <p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro * 1000,
-    trial_duration: 10000,
-    extensions: AUDIO ? [
-        {
+<p>In this experiment, you will play a treasure sorting game.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro * 1000,
+    extensions: [
+        ... AUDIO ? [{
             type: jsPsychPlayAudio,
             params: {
                 audio_path: 'audio/intro.mp3',
             }
-        }
-    ]: [],
+        }]: [],
+    ]
 }
 
 
 const recording_info = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>During the playing, your activity and eye movements will be recorded.</p><p>However, your video will not be recorded.</p>
-    <p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_2 * 1000,
+<p>During the playing, your activity and eye movements will be recorded.</p><p>However, your video will not be recorded.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_2 * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -371,11 +375,11 @@ const recording_info = {
 }
 
 const eye_calibration_intro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions properly to help us get the most accurate experiment results.</p>
-    <p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_3 * 1000,
+<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro_3 * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -388,12 +392,13 @@ const eye_calibration_intro = {
 
 
 // Switch to fullscreen
+// TODO: Safari does not work keyboard input in fullscree. Need to test on other browsers (and safari again).
 const fullscreen = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Fullscreen</h1>
-<p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>
-<p>Press any key to fullscreen and continue to camera calibration.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.fullscreen * 1000,
+<p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.fullscreen * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -430,8 +435,16 @@ const cam_warning = {
     stimulus: `<h1>Please allow camera access for eye tracking.</h1><h1><span style="color: red">No video will be recorded.</span> </h1>`
 }
 
+
+const cam_font_size = 2;
 const cam_check = {
     type: jsPsychWebgazerInitCamera,
+    instructions: `<p style="font-size: ${cam_font_size}vh">Position your head so that the webcam has a good view of your eyes.</p>
+<p style="font-size:${cam_font_size}vh">Center your face in the box and look directly towards the camera.</p>
+
+<p style="font-size:${cam_font_size}vh">It is important that you try and keep your head reasonably still throughout the experiment, so please take a moment to adjust your setup to be comfortable.</p>
+
+<p style="font-size:${cam_font_size}vh">When your face is centered in the box and the box is green, you can click to continue.</p>`,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -443,11 +456,11 @@ const cam_check = {
 }
 
 const calibration_guide = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Camera Calibration</h1>
-    <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>
-    <p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration * 1000,
+    <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -459,11 +472,11 @@ const calibration_guide = {
 }
 
 const cam_calibration = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Camera Calibration</h1>
-    <p>During the calibration, you will see a few dots on the screen.</p><p>Please look at the dots as they appear.</p><p>Then you need to click them with your mouse.</p>
-    <p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration_2 * 1000,
+    <p>During the calibration, you will see a few dots on the screen.</p><p>Please look at the dots as they appear.</p><p>Then you need to click them with your mouse.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.cam_calibration_2 * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -492,10 +505,11 @@ const calibration_points = {
 
 // Welcome screen
 const tutorial_welcome = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>The Quest for the Lost Relics</h1>
 <p>In a time long forgotten, the kingdom of Eldoria was known for its powerful and enchanting relics.</p><p>These relics, known as the Arcane Crystals, Ethereal Blossoms, Draconic Scales, and Lunar Pearls, were the source of magic that kept the kingdom in harmony.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -506,13 +520,14 @@ const tutorial_welcome = {
     ] : [],
 };
 const tutorial_intro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<p>The wise sages of Eldoria created four special bags, each designed to house one type of specific relic.</p><p>However, over the centuries, the knowledge of their correct bags was lost.</p>
         <img src="images/tutorial/buckets/tutorial_basket-1.png" width="10%" />
         <img src="images/tutorial/buckets/tutorial_basket-2.png" width="10%" />
         <img src="images/tutorial/buckets/tutorial_basket-3.png" width="10%" />
         <img src="images/tutorial/buckets/tutorial_basket-4.png" width="10%" />`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest_bag * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.quest_bag * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -523,9 +538,10 @@ const tutorial_intro = {
     ] : [],
 };
 const tutorial_task = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Your task is to venture into the Enchanted Forest and restore the magic of Eldoria.</p><p>You will be provided with the four bags.</p><p>Each bag must contain only specific types of relics to preserve its magical energy.</p><p>After putting a relic in the correct bag, you will receive a diamond reward.</p><p>If the relic is put into a wrong bag, you will not receive any diamond.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.task * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.task * 1000,
     extensions: AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -551,7 +567,7 @@ const tutorialFixationPoint = {
 
 const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 100}%" />
+    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
 <p>This is ${jsPsych.timelineVariable('correct_bucket_index') == 0 ? "a" : "another"} relic. </p>
 <p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
 <p>Press the button below to assign the name of the relic.</p>`,
@@ -583,6 +599,7 @@ const tutorialActionSelection = {
     bucket_labels: tutorial_baskets.map(b => b.name),
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
+    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     randomize_bucket_order: false,
     text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
     data: { my_trial_type: 'dragndrop' },
@@ -613,6 +630,7 @@ const tutorialActionSelection2 = {
     buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
     show_labels: true,
     bucket_labels: tutorial_baskets.map(b => b.name),
+    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     randomize_bucket_order: false,
@@ -658,7 +676,7 @@ const tutorialProcedure = {
             correct_bucket_index: tutorial_stimulus[2].correct_action,
             stimuli_path: tutorial_stimulus[2].image,
             buckets: [tutorial_baskets[0], tutorial_baskets[1], tutorial_baskets[2]],
-            bucket_start_angle: 0,
+            bucket_start_angle: 30,
             context: 0, 
         },
         {
@@ -666,7 +684,7 @@ const tutorialProcedure = {
             correct_bucket_index: tutorial_stimulus[3].correct_action,
             stimuli_path: tutorial_stimulus[3].image,
             buckets: [tutorial_baskets[0], tutorial_baskets[1], tutorial_baskets[2], tutorial_baskets[3]],
-            bucket_start_angle: 0,
+            bucket_start_angle: 45,
             context: 0, 
         },
     ],
@@ -681,12 +699,12 @@ const tutorialProcedure = {
 
 // Main Experiment intro
 const tutorial_outro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Great job!</h1>
 <p>You have successfully completed the tutorial. Now, you will be presented with the main experimental game.</p>
-<p>This time you won't know where to drag each element. You have to do that based on your assumption.</p>
-<p>Press any key to continue.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.great_job * 1000,
+<p>This time you won't know where to drag each element. You have to do that based on your assumption.</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.great_job * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -698,10 +716,11 @@ const tutorial_outro = {
 }
 
 const main_game_intro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>The Lost Treasures of Colorland</h1>
 <p>Welcome to Colorland, a vibrant kingdom where every shape, color, and pattern contributes to its festivals.</p><p>This year, a whirlwind has mixed up all the decorations needed for the grand Festival of Patterns.</p><p>Without these decorations in their right places, the festival cannot start.</p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -713,13 +732,14 @@ const main_game_intro = {
 }
 
 const main_game_intro2 = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<p>To save the Festival of Patterns, we need your special skills.</p><p>We have four magical buckets, each dedicated to collecting specific types of festival decorations.</p>
         <img src="images/baskets/basket-blue.png" width="10%" />
         <img src="images/baskets/basket-green.png" width="10%" />
         <img src="images/baskets/basket-red.png" width="10%" />
         <img src="images/baskets/basket-yellow.png" width="10%" />`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_4bags * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_4bags * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -730,9 +750,10 @@ const main_game_intro2 = {
     ] : [],
 }
 const main_game_intro3 = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Here’s how you can help: We will show you one special decoration at a time.</p><p>You need to assign name for that treasure, and then drop it in the right bucket.</p><p>If you place it correctly, a magical reward will appear! </p>`,
-    input_register_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_help * 1000,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.colorland_help * 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -743,8 +764,10 @@ const main_game_intro3 = {
     ] : [],
 }
 const main_game_intro4 = {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>Let the Treasure Hunting Begin!</h1><p>Press any key to start the game.</p>`,
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Let the Treasure Hunting Begin!</h1>`,
+    show_button_after: DEBUGGING ? 10 : 1000,
+    choices: ["Start"],
 }
 
 
@@ -822,6 +845,7 @@ const showIfNewState = {
         .new_state
 }
 
+
 const actionSelection = {
     type: jsPsychDragndrop,
     element: jsPsych.timelineVariable('stimuli_path'),
@@ -857,6 +881,13 @@ const actionSelection = {
                     '#jspsych-dragndrop-bucket-2 img',
                     '#jspsych-dragndrop-bucket-3 img',
                 ],
+            }
+        },
+        {
+            type: jsPsychHelpButton,
+            params: {
+                header: "Drag-n-drop Tutorial",
+                content: TUTORIAL_CONTENT,
             }
         }
     ],
@@ -898,10 +929,11 @@ const context1Procedure = {
 
 // Context 2 Intro
 const context2Intro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Good job!</h1>
-<p>You have sorted the first set of treasures.</p><p>Now, you will be presented with a new set of treasures. Best of luck!</p>
-<p>Press any key to continue.</p>`,
+<p>You have sorted the first set of treasures.</p><p>Now, you will be presented with a new set of treasures. Best of luck!</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -938,13 +970,14 @@ const context2Procedure = {
 
 // Context 3 Intro
 const context3Intro = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Good job!</h1>
 <p>You have sorted the second set of treasures!</p>
 <p>At the last stage, you will encounter all the treasures you have seen so far throughout Colorland.</p>
 <p>As you are already familiar with these treasures, we will not show any reward feedback.</p>
-<p>The fate of colorland depends on you. Best of luck!</p>
-<p>Press any key to continue.</p>`,
+<p>The fate of colorland depends on you. Best of luck!</p>`,
+    choices: ["Continue"],
+    show_button_after: DEBUGGING ? 10 : 1000,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -983,7 +1016,7 @@ const context3Procedure = {
             stimuli_path: context3_stimulus[i].image,
             context: 3,
             buckets: [BASKETS[0], BASKETS[1], BASKETS[2], BASKETS[3]],
-            bucket_start_angle: 0,
+            bucket_start_angle: 45,
         }
     )),
     randomize_order: true,
@@ -1014,6 +1047,16 @@ const stateSurvey = {
     ] : [],
 }
 
+const stateActionSurvey = {
+    type: jsPsychSurveyMultiChoice,
+    questions: () => jsPsych.data.get().filter({ trial_type: 'survey-multi-select' }).last(1).values()[0].response.realTreasures.map((t: string) => ({
+        prompt: `For the treasure named "<b>${t}</b>", which bucket do you think it belongs to?`,
+        name: t,
+        options: BASKETS.map(b => b.name),
+        required: true,
+    })),
+}
+
 
 // outro
 const outro = {
@@ -1024,42 +1067,43 @@ const outro = {
 
 const timeline = [
     preload,
-    welcome,
-    browser_check,
-    experiment_information,
-    recording_info,
-    eye_calibration_intro,
+    // welcome,
+    // browser_check,
+    // experiment_information,
+    // recording_info,
+    // eye_calibration_intro,
 
-    fullscreen,
-    ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+    // fullscreen,
+    // ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
 
-    ... TRACK_EYE ? [
-        cam_warning,
-        cam_check,
-        calibration_guide,
-        cam_calibration,
-        calibration_points,
-    ] : [],
+    // ... TRACK_EYE ? [
+    //     cam_warning,
+    //     cam_check,
+    //     calibration_guide,
+    //     cam_calibration,
+    //     calibration_points,
+    // ] : [],
     
-    tutorial_welcome,
-    tutorial_intro,
-    tutorial_task,
-    tutorialProcedure,
-    tutorial_outro,
+    // tutorial_welcome,
+    // tutorial_intro,
+    // tutorial_task,
+    // tutorialProcedure,
+    // tutorial_outro,
     
-    main_game_intro,
-    main_game_intro2,
-    main_game_intro3,
-    main_game_intro4,
+    // main_game_intro,
+    // main_game_intro2,
+    // main_game_intro3,
+    // main_game_intro4,
     
-    context1Procedure,
-    context2Intro,
-    context2Procedure,
-    context3Intro,
-    populate_context3_state_names,
-    context3Procedure,
+    // context1Procedure,
+    // context2Intro,
+    // context2Procedure,
+    // context3Intro,
+    // populate_context3_state_names,
+    // context3Procedure,
     
     stateSurvey,
+    stateActionSurvey,
     outro,
 
     ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: false }],

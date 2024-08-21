@@ -147,7 +147,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
           width: ${draggable_size}px;
           height: ${draggable_size}px;
           position: absolute;
-          z-index: 10;
+          z-index: 2;
           cursor: pointer;
           user-select: none;
         }
