@@ -1,4 +1,4 @@
-import { initJsPsych, type JsPsych } from 'jspsych';
+import { initJsPsych } from 'jspsych';
 import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
 import jsPsychExtensionMouseTracking from '@jspsych/extension-mouse-tracking';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
