@@ -17,6 +17,8 @@ import jsPsychPlayAudio from './extensions/extension-play-audio';
 import jsPsychHelpButton from './extensions/extension-help-button';
 // import jsPsychAudioKeyboardResponse from '@jspsych/plugin-audio-keyboard-response';
 import jsPsychCallFunction from '@jspsych/plugin-call-function';
+import jsPsychProlificData from './plugins/plugin-save-prolific-data';
+import jsPsychProlificFinish from './plugins/plugin-prolific-completed';
 
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
@@ -32,9 +34,11 @@ if (!import.meta.env.VITE_FIREBASE_API_KEY) {
 
 const DEBUGGING = import.meta.env.VITE_DEBUGGING ? true : false;
 // const DEBUGGING = false;
+const PROLIFIC = DEBUGGING ? false : true;
 const TRACK_EYE = true;
 const UPLOAD_FIRESTORE = DEBUGGING ? false : true;
-const AUDIO = true;
+const AUDIO = false;
+
 
 // Initialize Extensions
 const extensions = [];
@@ -314,6 +318,14 @@ const AUDIO_DURATIONS = {
 const STIMULI_SIZE = 0.5;
 // const BUCKET_SIZE = 200;
 
+// prolific data
+const prolific_data_trial = {
+    type: jsPsychProlificData,
+    data: {
+        my_trial_type: 'prolific-data',
+    }
+}
+
 // Preload assets
 const preload = {
     type: jsPsychPreload,
@@ -337,14 +349,14 @@ const TUTORIAL_CONTENT = `<p style="font-size: 2vh">At the center, you will see 
 
 const welcome = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h1>Welcome to the experiment!</h1>`,
+    stimulus: `<h1>Welcome to the Game!</h1>`,
     choices: ["Continue"],
 }
 
 const experiment_information = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>In this experiment, you will play a treasure sorting game.</p>`,
+<p>In this game, you will play a treasure sorting game.</p>`,
     choices: ["Continue"],
     show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro * 1000,
     extensions: [
@@ -1057,6 +1069,13 @@ const stateActionSurvey = {
     })),
 }
 
+const prolificFinishTrial = {
+    type: jsPsychProlificFinish,
+    code: "CFH86CJA",
+    data: {
+        my_trial_type: 'prolific-finish',
+    }
+}
 
 // outro
 const outro = {
@@ -1066,6 +1085,7 @@ const outro = {
 
 
 const timeline = [
+    ... PROLIFIC ? [prolific_data_trial] : [],
     preload,
     welcome,
     browser_check,
@@ -1104,6 +1124,7 @@ const timeline = [
     
     stateSurvey,
     stateActionSurvey,
+    ... PROLIFIC ? [prolificFinishTrial] : [],
     outro,
 
     ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: false }],
