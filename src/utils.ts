@@ -31,3 +31,14 @@ export function getShuffledArray<T>(array: T[]): { shuffledArray: T[], originalI
       originalIndices: originalIndices
   };
 }
+
+export function addObjectInRange<T, NT>(arr: T[], obj: NT, start: number, end: number): (T | NT)[] {
+  let result: (T | NT)[] = [];
+  for (let i = 0; i < arr.length; i++) {
+      result.push(arr[i]); 
+      if (i >= start && i <= end) {
+          result.push(obj); 
+      }
+  }
+  return result;
+}

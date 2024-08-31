@@ -23,7 +23,7 @@ import jsPsychProlificFinish from './plugins/plugin-prolific-completed';
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
-import { getShuffledArray } from './utils';
+import { getShuffledArray, addObjectInRange } from './utils';
 
 import './styles.css';
 
@@ -32,13 +32,20 @@ if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     throw new Error("Firebase API key not found.");
 }
 
-const DEBUGGING = import.meta.env.VITE_DEBUGGING ? true : false;
-// const DEBUGGING = false;
-const PROLIFIC = DEBUGGING ? false : true;
-const TRACK_EYE = true;
-const UPLOAD_FIRESTORE = DEBUGGING ? false : true;
-const AUDIO = false;
+const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "";
+const DEBUGGING = (import.meta.env.VITE_DEBUGGING && import.meta.env.VITE_DEBUGGING === 'true') ? true : false;
+const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'true') ? true : false;
+const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'true') ? true : false;
+const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'true') ? true : false;
+const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'true') ? true : false;
 
+console.log("Rahat", import.meta.env.VITE_AUDIO, typeof import.meta.env.VITE_AUDIO)
+console.log('Rahat', AUDIO)
+
+if (UPLOAD_FIRESTORE && FIREBASE_API_KEY === "") {
+    console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
+    throw new Error("Firebase API key not found.");
+}
 
 // Initialize Extensions
 const extensions = [];
@@ -67,7 +74,7 @@ if (AUDIO)
 
 // Initialize Firebase
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    apiKey: FIREBASE_API_KEY,
     authDomain: "latent-state-learning.firebaseapp.com",
     projectId: "latent-state-learning",
     storageBucket: "latent-state-learning.appspot.com",
@@ -97,20 +104,21 @@ if (UPLOAD_FIRESTORE) {
 //     console.error(`Trial timed out: ${trial}`);
 //     jsPsych.endCurrentTimeline();
 // }
+// 
+
+// let lastInteractionDataIndex = 0;
 
 // Initialize jsPsych
 const jsPsych = initJsPsych({
     extensions: extensions,
     on_data_update: (data: any) => {
-        // check if fullscreen
-        const interaction_data = jsPsych.data.getInteractionData()
-        // jsPsych.data.get().addToLast({ interactions: interaction_data.csv() })
-        // jsPsych.data.get().addToLast({ blur_events: blur_events.csv() })
-        // jsPsych.data.get().addToLast({ focus_events: focus_events.csv() })
-        // jsPsych.data.get().addToLast({ fullscreenenter_events: fullscreenenter_events.csv() })
-        // jsPsych.data.get().addToLast({ fullscreenexit_events: fullscreenexit_events.csv() })
-        
-        console.log("interaction_data", interaction_data.values());
+        // Check if fullscreen.
+        // Note: This is replaced with the fullscreenIfTrial.
+        // const interaction_data = jsPsych.data.getInteractionData()
+        // if (interaction_data.values().slice(lastInteractionDataIndex).some((v: any) => v.event === "fullscreenexit")) {
+        //     jsPsych.endExperiment("The experiment has ended because you exited fullscreen mode.");
+        // }
+        // lastInteractionDataIndex = interaction_data.values().length;
 
 
         const trialData = JSON.parse(JSON.stringify(data));
@@ -326,6 +334,22 @@ const prolific_data_trial = {
     }
 }
 
+const fullscreenIfTrial = {
+    timeline: [
+        {
+            type: jsPsychFullscreen,
+            fullscreen_mode: true,
+            message: `<h1>Fullscreen</h1>
+<p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>`,
+            button_label: "Continue",
+        }
+    ],
+    conditional_function: () => !document.fullscreenElement,
+    data: {
+        my_trial_type: 'fullscreen',
+    }
+}
+
 // Preload assets
 const preload = {
     type: jsPsychPreload,
@@ -356,16 +380,17 @@ const welcome = {
 const experiment_information = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>In this game, you will play a treasure sorting game.</p>`,
+<p>You will play a treasure sorting game.</p>`,
     choices: ["Continue"],
     show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.intro * 1000,
     extensions: [
-        ... AUDIO ? [{
-            type: jsPsychPlayAudio,
-            params: {
-                audio_path: 'audio/intro.mp3',
-            }
-        }]: [],
+        // TODO: Update the audio
+        // ... AUDIO ? [{
+        //     type: jsPsychPlayAudio,
+        //     params: {
+        //         audio_path: 'audio/intro.mp3',
+        //     }
+        // }]: [],
     ]
 }
 
@@ -658,14 +683,16 @@ const tutorial2CorrectLoop = {
     timeline: [tutorialActionSelection2, tutorialRewardTrial],
     loop_function: () => !getOutcome(),
 };
+
+const tutorialTimeline = [
+    ... TRACK_EYE ? [tutorialFixationPoint] : [],
+    tutorialStateEstimation,
+    tutorialCorrectLoop,
+    ... TRACK_EYE ? [tutorialFixationPoint] : [],
+    tutorial2CorrectLoop,
+]
 const tutorialProcedure = {
-    timeline: [
-        ... TRACK_EYE ? [tutorialFixationPoint] : [],
-        tutorialStateEstimation,
-        tutorialCorrectLoop,
-        ... TRACK_EYE ? [tutorialFixationPoint] : [],
-        tutorial2CorrectLoop,
-    ],
+    timeline: !DEBUGGING ? addObjectInRange(tutorialTimeline, fullscreenIfTrial, 1, tutorialTimeline.length - 1) : tutorialTimeline,
     timeline_variables: [
         {
             stimuli: `<img src="${tutorial_stimulus[0].image}" width="${STIMULI_SIZE * 100}%" />`,
@@ -713,8 +740,8 @@ const tutorialProcedure = {
 const tutorial_outro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Great job!</h1>
-<p>You have successfully completed the tutorial. Now, you will be presented with the main experimental game.</p>
-<p>This time you won't know where to drag each element. You have to do that based on your assumption.</p>`,
+<p>You have successfully completed the tutorial. Now, you will be presented with the main game.</p>
+<p>This time you won't know where to drag each element. You have learn where to drag the elements by trying options and learning which work.</p>`,
     choices: ["Continue"],
     show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.great_job * 1000,
     extensions: AUDIO ? [
@@ -916,14 +943,15 @@ const rewardTrial = {
 };
 
 // Context 1
+const context1Timeline = [
+    ... TRACK_EYE ? [fixationPoint] : [],
+    stateEstimation,
+    showIfNewState,
+    actionSelection,
+    rewardTrial,
+]
 const context1Procedure = {
-    timeline: [
-        ... TRACK_EYE ? [fixationPoint] : [],
-        stateEstimation,
-        showIfNewState,
-        actionSelection,
-        rewardTrial,
-    ],
+    timeline: !DEBUGGING ? addObjectInRange(context1Timeline, fullscreenIfTrial, 1, context1Timeline.length - 1) : context1Timeline,
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
             stimuli: `<img src="${context1_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
@@ -957,14 +985,15 @@ const context2Intro = {
 }
 
 // Context 2
+const context2Timeline = [
+    ... TRACK_EYE ? [fixationPoint] : [],
+    stateEstimation,
+    showIfNewState,
+    actionSelection,
+    rewardTrial,
+]
 const context2Procedure = {
-    timeline: [
-        ... TRACK_EYE ? [fixationPoint] : [],
-        stateEstimation,
-        showIfNewState,
-        actionSelection,
-        rewardTrial,
-    ],
+    timeline: !DEBUGGING ? addObjectInRange(context2Timeline, fullscreenIfTrial, 1, context2Timeline.length - 1) : context2Timeline,
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
             stimuli: `<img src="${context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
@@ -1013,14 +1042,15 @@ const populate_context3_state_names = {
 };
 
 // Context 3
+const context3Timeline = [
+    ... TRACK_EYE ? [fixationPoint] : [],
+    stateEstimation,
+    showIfNewState,
+    actionSelection,
+    // rewardTrial,
+]
 const context3Procedure = {
-    timeline: [
-        ... TRACK_EYE ? [fixationPoint] : [],
-        stateEstimation,
-        showIfNewState,
-        actionSelection,
-        // rewardTrial,
-    ],
+    timeline: !DEBUGGING ? addObjectInRange(context3Timeline, fullscreenIfTrial, 1, context3Timeline.length - 1) : context3Timeline,
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
         {
             stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
@@ -1084,7 +1114,7 @@ const outro = {
 };
 
 
-const timeline = [
+const timeline: any[] = [
     ... PROLIFIC ? [prolific_data_trial] : [],
     preload,
     welcome,
@@ -1094,7 +1124,8 @@ const timeline = [
     eye_calibration_intro,
 
     fullscreen,
-    ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+    // ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+    { type: jsPsychFullscreen, fullscreen_mode: true },
 
     ... TRACK_EYE ? [
         cam_warning,
@@ -1130,6 +1161,7 @@ const timeline = [
     ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: false }],
 ];
 
+const timelineWithFullscreenCheck = !DEBUGGING ? addObjectInRange(timeline, fullscreenIfTrial, 7, timeline.length - 1) : timeline;
 
-jsPsych.run(timeline);
+jsPsych.run(timelineWithFullscreenCheck);
 
