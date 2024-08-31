@@ -336,8 +336,10 @@ const createProbabilisticDistribution = (
 
 
 function pickProbabilisticIndex(probabilities: number[]): number {
+    const normalizedProbabilities = probabilities.map(p => p / probabilities.reduce((a, b) => a + b, 0));
+    console.log("Normalized Probabilities: ", normalizedProbabilities);
     // Create a cumulative sum array using reduce
-    const cumulative = probabilities.reduce<number[]>((acc, prob, i) => {
+    const cumulative = normalizedProbabilities.reduce<number[]>((acc, prob, i) => {
         acc.push(prob + (acc[i - 1] || 0));
         return acc;
     }, []);
@@ -664,7 +666,7 @@ const tutorialActionSelection = {
     track_dragging: true,
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     randomize_bucket_order: false,
-    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that basket.`,
+    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that bag.`,
     data: { my_trial_type: 'dragndrop' },
     on_finish: (data: any) => {
         const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
@@ -772,6 +774,115 @@ const tutorialProcedure = {
         context: 0,
         tutorial: true,
     }
+}
+
+const tutorial_prob_intro = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p>There are some relics that are disguised. So even if they look the same as a relic name, it will belong to other bags.</p><p>For the next relics, they will all belong to "${tutorial_baskets[0].name}", however, 1 out of 5 relics will be in disguise. You will see when you put all the relics in "${tutorial_baskets[0].name}"</p>`,
+    choices: ['Continue'],
+    show_button_after: DEBUGGING ? 10: 1000,
+}
+const tutorial_prob_action_selection = {
+    type: jsPsychDragndrop,
+    element: tutorial_stimulus[0].image,
+    show_element_label: true,
+    element_label: all_context_state_names[0][0],
+    buckets: [tutorial_baskets[0].image, tutorial_baskets[1].image],
+    show_labels: true,
+    bucket_labels: [tutorial_baskets[0].name, tutorial_baskets[1].name],
+    track_dragging: true,
+    bucket_start_angle: 0,
+    randomize_bucket_order: false,
+    text_prompt: () => `This relic seems to belong to the <b>${tutorial_baskets[0].name}</b>. Drag the treasure to that bag.`,
+    data: { my_trial_type: 'dragndrop' },
+    on_finish: (data: any) => {
+        const bucket_probs = [1, 0];
+        const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
+        data.bucket_probs = bucket_probs;
+        data.correct_bucket_index = correct_bucket_index;
+        data.is_correct = data.drop_bucket === correct_bucket_index;
+    }
+    // extensions: [
+    //     ... AUDIO ? [{
+    //         type: jsPsychPlayAudio,
+    //         params: {
+    //             audio_path: 'audio/relic_1.mp3',
+    //         }
+    //     }] : [],
+    // ],
+};
+
+const tutorial_prob_reward_trial = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: () => {
+        const lastTrialData = jsPsych.data.get().filter({ trial_type: 'dragndrop' }).last(1).values()[0];
+        if (lastTrialData.drop_bucket === 0)
+            return `<img src="${rewards.correct}" width="30%" />
+            <p>You have selected the right bag! <p>Keep selecting ${tutorial_baskets[0].name} for the next relics.</p>`;
+        else if (lastTrialData.drop_bucket === 1)
+            return `<img src="${rewards.incorrect}" width="30%" />
+            <p>You have selected the wrong bag. Select ${tutorial_baskets[0].name} for the next relics.</b></p>`;
+    },
+    choices: DEBUGGING ? "ALL_KEYS" : "NO_KEYS",
+    trial_duration: 2000,
+    data: { my_trial_type: 'reward' },
+}
+
+let number_of_correct_prob_trials = 0;
+const total_correct_prob_trial = 4;
+const tutorial_prob_loop = {
+    timeline: [tutorial_prob_action_selection, tutorial_prob_reward_trial],
+    loop_function: () => {
+        const lastTrialData = jsPsych.data.get().filter({ trial_type: 'dragndrop' }).last(1).values()[0];
+        if (lastTrialData.drop_bucket === 0) {
+            number_of_correct_prob_trials++;
+            return number_of_correct_prob_trials < total_correct_prob_trial;
+        }
+        return true;
+    },
+}
+
+const tutorial_prob_action_selection2 = {
+    type: jsPsychDragndrop,
+    element: tutorial_stimulus[0].image,
+    show_element_label: true,
+    element_label: all_context_state_names[0][0],
+    buckets: [tutorial_baskets[0].image, tutorial_baskets[1].image],
+    show_labels: true,
+    bucket_labels: [tutorial_baskets[0].name, tutorial_baskets[1].name],
+    track_dragging: true,
+    bucket_start_angle: 0,
+    randomize_bucket_order: false,
+    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[0].name}</b>. Drag the treasure to that bag.`,
+    data: { my_trial_type: 'dragndrop' },
+    on_finish: (data: any) => {
+        const bucket_probs = [0, 1];
+        const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
+        data.bucket_probs = bucket_probs;
+        data.correct_bucket_index = correct_bucket_index;
+        data.is_correct = data.drop_bucket === correct_bucket_index;
+    }
+}
+const tutorial_prob_reward_trial2 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => {
+        const lastTrialData = jsPsych.data.get().filter({ trial_type: 'dragndrop' }).last(1).values()[0];
+        if (lastTrialData.drop_bucket === 0)
+            return `<img src="${rewards.incorrect}" width="30%" />
+            <p>Even though you selected the right bag, you are not rewarded. This can happen sometimes.</p>`;
+        else if (lastTrialData.drop_bucket === 1)
+            return `<img src="${rewards.incorrect}" width="30%" />
+            <p>You have selected the wrong bag. Keep selecting ${tutorial_baskets[0].name} to continue.</b></p>`;
+    },
+    choices: ["Continue"],
+    data: { my_trial_type: 'reward' },
+}
+const tutorial_prob_wrong_loop = {
+    timeline: [tutorial_prob_action_selection2, tutorial_prob_reward_trial2],
+    loop_function: () => {
+        const lastTrialData = jsPsych.data.get().filter({ trial_type: 'dragndrop' }).last(1).values()[0];
+        return lastTrialData.drop_bucket === 1;
+    },
 }
 
 
@@ -1185,6 +1296,9 @@ const timeline: any[] = [
     tutorial_intro,
     tutorial_task,
     tutorialProcedure,
+    tutorial_prob_intro,
+    tutorial_prob_loop,
+    tutorial_prob_wrong_loop,
     tutorial_outro,
     
     main_game_intro,
