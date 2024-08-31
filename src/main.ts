@@ -558,6 +558,7 @@ const calibration_points = {
     calibration_points: [[25, 50], [50, 50], [75, 50], [50, 25], [50, 75]],
     calibration_mode: 'click',
     randomize_calibration_order: true,
+    repitation_per_point: 1,
     extensions: AUDIO ? [
         {
             type: jsPsychPlayAudio,
@@ -625,7 +626,7 @@ const tutorialFixationPoint = {
     validation_points: [[0, 0]],
     validation_point_coordinates: 'center-offset-pixels',
     roi_radius: 100,
-    show_validation_data: DEBUGGING ? true : false,
+    show_validation_data: false,
     data: {
         my_trial_type: 'fixation-point',
     }
