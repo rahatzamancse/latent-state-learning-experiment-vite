@@ -1161,7 +1161,5 @@ const timeline: any[] = [
     ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: false }],
 ];
 
-const timelineWithFullscreenCheck = !DEBUGGING ? addObjectInRange(timeline, fullscreenIfTrial, 7, timeline.length - 1) : timeline;
-
-jsPsych.run(timelineWithFullscreenCheck);
+jsPsych.run(!DEBUGGING ? addObjectInRange(timeline, fullscreenIfTrial, 7, timeline.length - 1) : timeline);
 
