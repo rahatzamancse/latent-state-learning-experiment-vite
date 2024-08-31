@@ -38,9 +38,7 @@ const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC
 const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'false') ? false : true;
 const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'false') ? false : true;
 const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'false') ? false : true;
-
-console.log("Rahat", import.meta.env.VITE_AUDIO, typeof import.meta.env.VITE_AUDIO)
-console.log('Rahat', AUDIO)
+const DOWNLOAD_AT_END = (import.meta.env.VITE_DOWNLOAD_AT_END && import.meta.env.VITE_DOWNLOAD_AT_END === 'true') ? true : false;
 
 if (UPLOAD_FIRESTORE && FIREBASE_API_KEY === "") {
     console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
@@ -156,7 +154,7 @@ const jsPsych = initJsPsych({
     },
     on_finish: () => {
         console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
-        if (DEBUGGING)
+        if (DOWNLOAD_AT_END)
             jsPsych.data.get().localSave('json', 'data.json');
     },
     on_trial_start: (trial: any) => {
