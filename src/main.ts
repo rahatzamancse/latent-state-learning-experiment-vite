@@ -34,10 +34,10 @@ if (!import.meta.env.VITE_FIREBASE_API_KEY) {
 
 const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "";
 const DEBUGGING = (import.meta.env.VITE_DEBUGGING && import.meta.env.VITE_DEBUGGING === 'true') ? true : false;
-const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'true') ? true : false;
-const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'true') ? true : false;
-const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'true') ? true : false;
-const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'true') ? true : false;
+const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'false') ? false : true;
+const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'false') ? false : true;
+const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'false') ? false : true;
+const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'false') ? false : true;
 
 console.log("Rahat", import.meta.env.VITE_AUDIO, typeof import.meta.env.VITE_AUDIO)
 console.log('Rahat', AUDIO)
