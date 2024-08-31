@@ -44,10 +44,6 @@ const info = <const>{
       type: ParameterType.INT,
       default: 0,
     },
-    correct_bucket_index: {
-      type: ParameterType.INT,
-      default: undefined,
-    }
   },
 };
 
@@ -239,9 +235,7 @@ class DragndropPlugin implements JsPsychPlugin<Info> {
                 dropped: droppedInBucketIndex === i,
               }
             )),
-            correct_bucket_index: trial.correct_bucket_index,
             drop_bucket: droppedInBucketIndex,
-            is_correct: droppedInBucketIndex === trial.correct_bucket_index,
             stimuli: [trial.element],
             rt: rt,
           };

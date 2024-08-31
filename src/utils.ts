@@ -42,3 +42,9 @@ export function addObjectInRange<T, NT>(arr: T[], obj: NT, start: number, end: n
   }
   return result;
 }
+
+export function findMaxIndex(arr: number[]): number {
+  return arr.reduce((maxIndex, currentValue, currentIndex, array) => {
+      return currentValue > array[maxIndex] ? currentIndex : maxIndex;
+  }, 0);
+}

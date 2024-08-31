@@ -23,7 +23,7 @@ import jsPsychProlificFinish from './plugins/plugin-prolific-completed';
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
-import { getShuffledArray, addObjectInRange } from './utils';
+import { getShuffledArray, addObjectInRange, findMaxIndex } from './utils';
 
 import './styles.css';
 
@@ -32,6 +32,8 @@ if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     throw new Error("Firebase API key not found.");
 }
 
+// TODO: Add instruction to keep laptop/camera stable. And How to use it.
+
 const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "";
 const DEBUGGING = (import.meta.env.VITE_DEBUGGING && import.meta.env.VITE_DEBUGGING === 'true') ? true : false;
 const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'false') ? false : true;
@@ -39,6 +41,8 @@ const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_
 const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'false') ? false : true;
 const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'false') ? false : true;
 const DOWNLOAD_AT_END = (import.meta.env.VITE_DOWNLOAD_AT_END && import.meta.env.VITE_DOWNLOAD_AT_END === 'true') ? true : false;
+
+const REWARD_PROBABILITY = 0.8;
 
 if (UPLOAD_FIRESTORE && FIREBASE_API_KEY === "") {
     console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
@@ -228,32 +232,32 @@ const tutorial_stimulus = [
     correct_action: i[1] - 1,
 }));
 const context1_stimulus = [
-    [1, "blue", 0],
-    [2, "blue", 0],
-    [3, "green", 1],
-    [4, "green", 1],
+    [1, "blue", 0] as [number, string, number],
+    [2, "blue", 0] as [number, string, number],
+    [3, "green", 1] as [number, string, number],
+    [4, "green", 1] as [number, string, number],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: i[2],
 }));
 const context2_stimulus = [
-    [5, "red", 0],
-    [6, "red", 0],
-    [7, "yellow", 1],
-    [8, "yellow", 1],
+    [5, "red", 0] as [number, string, number],
+    [6, "red", 0] as [number, string, number],
+    [7, "yellow", 1] as [number, string, number],
+    [8, "yellow", 1] as [number, string, number],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: i[2],
 }));
 const context3_stimulus = [
-    [1, "blue", 0],
-    [2, "blue", 0],
-    [3, "green", 1],
-    [4, "green", 1],
-    [5, "red", 2],
-    [6, "red", 2],
-    [7, "yellow", 3],
-    [8, "yellow", 3],
+    [1, "blue", 0] as [number, string, number],
+    [2, "blue", 0] as [number, string, number],
+    [3, "green", 1] as [number, string, number],
+    [4, "green", 1] as [number, string, number],
+    [5, "red", 2] as [number, string, number],
+    [6, "red", 2] as [number, string, number],
+    [7, "yellow", 3] as [number, string, number],
+    [8, "yellow", 3] as [number, string, number],
 ].map(i => ({
     image: `images/stimulus/animal_${i[0]}.png`,
     correct_action: i[2],
@@ -319,6 +323,31 @@ const AUDIO_DURATIONS = {
     task: 20,
     webgazer_calibration: 5,
 }
+
+const createProbabilisticDistribution = (
+    correctProbability: number,
+    i: number,
+    len: number
+): number[] => {
+    const otherProbability = (1 - correctProbability) / (len - 1);
+
+    return Array.from({ length: len }).map((_, index) => (index === i ? correctProbability : otherProbability));
+};
+
+
+function pickProbabilisticIndex(probabilities: number[]): number {
+    // Create a cumulative sum array using reduce
+    const cumulative = probabilities.reduce<number[]>((acc, prob, i) => {
+        acc.push(prob + (acc[i - 1] || 0));
+        return acc;
+    }, []);
+
+    // Generate a random number between 0 and 1
+    const random = Math.random();
+
+    // Find the first index where the random number is less than the cumulative probability
+    return cumulative.findIndex(cumProb => random < cumProb);
+};
 
 
 const STIMULI_SIZE = 0.5;
@@ -603,16 +632,16 @@ const tutorialFixationPoint = {
 const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
     stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
-<p>This is ${jsPsych.timelineVariable('correct_bucket_index') == 0 ? "a" : "another"} relic. </p>
-<p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]}".</p>
+<p>This is ${findMaxIndex(jsPsych.timelineVariable('bucket_probabilities')) === 0 ? "a" : "another"} relic. </p>
+<p>Let us assume the name of the relic is "${all_context_state_names[jsPsych.timelineVariable('context')][findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))]}".</p>
 <p>Press the button below to assign the name of the relic.</p>`,
-    choices: () => [all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_bucket_index')]],
+    choices: () => [all_context_state_names[jsPsych.timelineVariable('context')][findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))]],
     data: { my_trial_type: 'state-estimation' },
     on_finish: (data: any) => {
         const tutorial_states = all_context_state_names[jsPsych.timelineVariable('context')];
         data.new_state = true;
         all_context_assigned_indices[jsPsych.timelineVariable('context')]++;
-        data.estimated_state = tutorial_states[jsPsych.timelineVariable('correct_bucket_index')];
+        data.estimated_state = tutorial_states[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))];
     },
     // extensions: [
     //     ... AUDIO ? [{
@@ -632,12 +661,18 @@ const tutorialActionSelection = {
     buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
     show_labels: true,
     bucket_labels: tutorial_baskets.map(b => b.name),
-    correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     randomize_bucket_order: false,
-    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>. Drag the treasure to that basket.`,
+    text_prompt: () => `This relic belongs to the <b>${tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that basket.`,
     data: { my_trial_type: 'dragndrop' },
+    on_finish: (data: any) => {
+        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
+        data.bucket_probs = bucket_probs;
+        data.correct_bucket_index = correct_bucket_index;
+        data.is_correct = data.drop_bucket == correct_bucket_index;
+    }
     // extensions: [
     //     ... AUDIO ? [{
     //         type: jsPsychPlayAudio,
@@ -666,11 +701,17 @@ const tutorialActionSelection2 = {
     show_labels: true,
     bucket_labels: tutorial_baskets.map(b => b.name),
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
-    correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${tutorial_baskets[jsPsych.timelineVariable('correct_bucket_index')].name}</b>.`,
+    text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>.`,
     data: { my_trial_type: 'dragndrop' },
+    on_finish: (data: any) => {
+        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
+        data.bucket_probs = bucket_probs;
+        data.correct_bucket_index = correct_bucket_index;
+        data.is_correct = data.drop_bucket == correct_bucket_index;
+    }
 };
 
 const tutorialCorrectLoop = {
@@ -694,7 +735,7 @@ const tutorialProcedure = {
     timeline_variables: [
         {
             stimuli: `<img src="${tutorial_stimulus[0].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: tutorial_stimulus[0].correct_action,
+            bucket_probabilities: [1],
             stimuli_path: tutorial_stimulus[0].image,
             buckets: [tutorial_baskets[0]],
             bucket_start_angle: 0,
@@ -702,7 +743,7 @@ const tutorialProcedure = {
         },
         {
             stimuli: `<img src="${tutorial_stimulus[1].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: tutorial_stimulus[1].correct_action,
+            bucket_probabilities: [0, 1],
             stimuli_path: tutorial_stimulus[1].image,
             buckets: [tutorial_baskets[0], tutorial_baskets[1]],
             bucket_start_angle: 0,
@@ -710,7 +751,7 @@ const tutorialProcedure = {
         },
         {
             stimuli: `<img src="${tutorial_stimulus[2].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: tutorial_stimulus[2].correct_action,
+            bucket_probabilities: [0, 0, 1],
             stimuli_path: tutorial_stimulus[2].image,
             buckets: [tutorial_baskets[0], tutorial_baskets[1], tutorial_baskets[2]],
             bucket_start_angle: 30,
@@ -718,7 +759,7 @@ const tutorialProcedure = {
         },
         {
             stimuli: `<img src="${tutorial_stimulus[3].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: tutorial_stimulus[3].correct_action,
+            bucket_probabilities: [0, 0, 0, 1],
             stimuli_path: tutorial_stimulus[3].image,
             buckets: [tutorial_baskets[0], tutorial_baskets[1], tutorial_baskets[2], tutorial_baskets[3]],
             bucket_start_angle: 45,
@@ -739,7 +780,7 @@ const tutorial_outro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Great job!</h1>
 <p>You have successfully completed the tutorial. Now, you will be presented with the main game.</p>
-<p>This time you won't know where to drag each element. You have learn where to drag the elements by trying options and learning which work.</p>`,
+<p>This time you won't know where to drag each element. You have to learn where to drag the elements by trying options and see which work.</p>`,
     choices: ["Continue"],
     show_button_after: DEBUGGING ? 10 : AUDIO_DURATIONS.great_job * 1000,
     extensions: AUDIO ? [
@@ -892,7 +933,6 @@ const actionSelection = {
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     show_labels: true,
     bucket_labels: BASKETS.map(b => b.name),
-    correct_bucket_index: jsPsych.timelineVariable('correct_bucket_index'),
     track_dragging: true,
     randomize_bucket_order: false,
     extensions: [ 
@@ -929,6 +969,13 @@ const actionSelection = {
         }
     ],
     data: { my_trial_type: 'dragndrop' },
+    on_finish: (data: any) => {
+        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
+        data.bucket_probs = bucket_probs;
+        data.correct_bucket_index = correct_bucket_index;
+        data.is_correct = data.drop_bucket == correct_bucket_index;
+    }
 }
 
 const rewardTrial = {
@@ -948,12 +995,13 @@ const context1Timeline = [
     actionSelection,
     rewardTrial,
 ]
+
 const context1Procedure = {
     timeline: !DEBUGGING ? addObjectInRange(context1Timeline, fullscreenIfTrial, 1, context1Timeline.length - 1) : context1Timeline,
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
             stimuli: `<img src="${context1_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: context1_stimulus[i].correct_action,
+            bucket_probabilities: createProbabilisticDistribution(REWARD_PROBABILITY, context1_stimulus[i].correct_action, 2),
             stimuli_path: context1_stimulus[i].image,
             context: 1,
             buckets: [BASKETS[0], BASKETS[1]],
@@ -995,7 +1043,7 @@ const context2Procedure = {
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
             stimuli: `<img src="${context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: context2_stimulus[i].correct_action,
+            bucket_probabilities: createProbabilisticDistribution(REWARD_PROBABILITY, context2_stimulus[i].correct_action, 2),
             stimuli_path: context2_stimulus[i].image,
             context: 2,
             buckets: [BASKETS[2], BASKETS[3]],
@@ -1052,7 +1100,7 @@ const context3Procedure = {
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
         {
             stimuli: `<img src="${context3_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
-            correct_bucket_index: context3_stimulus[i].correct_action,
+            bucket_probabilities: createProbabilisticDistribution(REWARD_PROBABILITY, context3_stimulus[i].correct_action, 4),
             stimuli_path: context3_stimulus[i].image,
             context: 3,
             buckets: [BASKETS[0], BASKETS[1], BASKETS[2], BASKETS[3]],
@@ -1122,8 +1170,8 @@ const timeline: any[] = [
     eye_calibration_intro,
 
     fullscreen,
-    // ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
-    { type: jsPsychFullscreen, fullscreen_mode: true },
+    ... DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+    // { type: jsPsychFullscreen, fullscreen_mode: true },
 
     ... TRACK_EYE ? [
         cam_warning,
