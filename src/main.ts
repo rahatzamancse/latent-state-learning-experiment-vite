@@ -142,6 +142,14 @@ const jsPsych = initJsPsych({
 });
 
 const skip_to = parseInt(jsPsych.data.getURLVariable('SKIP'));
+if (configs.DEBUGGING && skip_to > 1) {
+    // simulate context 1
+    configs.all_context_assigned_indices[1] = 2;
+}
+if (configs.DEBUGGING && skip_to > 2) {
+    configs.all_context_assigned_indices[2] = 2;
+}
+
 
 
 // Utility functions
@@ -444,10 +452,6 @@ const tutorialFixationPoint = {
 }
 
 const tutorialStateEstimation = {
-    on_start: () => {
-        console.log(configs.all_context_assigned_indices[0])
-        console.log(configs.all_context_state_names[0][jsPsych.timelineVariable('correct_state_index')])
-    },
     type: jsPsychHtmlButtonResponse,
     stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
 <p>This is ${findMaxIndex(jsPsych.timelineVariable('bucket_probabilities')) === 0 ? "a" : "another"} relic. </p>
@@ -472,7 +476,6 @@ const tutorialStateEstimation = {
         data.new_state = true;
         configs.all_context_assigned_indices[jsPsych.timelineVariable('context')]++;
         data.estimated_state = tutorial_states[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))];
-        console.log(configs.all_context_assigned_indices[0])
     }
 }
 
@@ -523,10 +526,6 @@ const tutorialRewardTrial = {
 };
 
 const tutorialStateEstimation2 = {
-    on_start: () => {
-        console.log(configs.all_context_assigned_indices[0])
-        console.log(configs.all_context_state_names[0][jsPsych.timelineVariable('correct_state_index')])
-    },
     type: jsPsychHtmlButtonResponse,
     stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
 <p>This is the same relic. </p>
@@ -1071,11 +1070,11 @@ const context3Intro = {
 const populate_context3_state_names = {
     type: jsPsychCallFunction,
     func: () => {
-        // the the used context 1 and context 2 states to the last context
+        // Use context 1 and context 2 states to the last context
         configs.all_context_state_names[3] = configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1])
             .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2]));
         
-        configs.all_context_assigned_indices[3] = configs.all_context_assigned_indices[1] + configs.all_context_assigned_indices[2] + 2;
+        configs.all_context_assigned_indices[3] = configs.all_context_assigned_indices[1] + configs.all_context_assigned_indices[2];
     }
 };
 
