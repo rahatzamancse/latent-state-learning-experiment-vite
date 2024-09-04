@@ -170,7 +170,6 @@ function getLastTrialTreasureName(all_treasure_names: string[]) {
 }
 
 
-const STIMULI_SIZE = 0.5;
 // const BUCKET_SIZE = 200;
 
 // prolific data
@@ -395,6 +394,9 @@ const tutorial_welcome = {
 <p>In a time long forgotten, the kingdom of Eldoria was known for its powerful and enchanting relics.</p><p>These relics, known as the Arcane Crystals, Ethereal Blossoms, Draconic Scales, and Lunar Pearls, were the source of magic that kept the kingdom in harmony.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.quest * 1000,
+    data: {
+        tutorial: true,
+    },
     extensions: configs.AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -413,6 +415,9 @@ const tutorial_intro = {
         <img src="images/tutorial/buckets/tutorial_basket-4.png" width="10%" />`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.quest_bag * 1000,
+    data: {
+        tutorial: true,
+    },
     extensions: configs.AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -427,6 +432,9 @@ const tutorial_task = {
     stimulus: `<p>Your task is to venture into the Enchanted Forest and restore the magic of Eldoria.</p><p>You will be provided with the four bags.</p><p>Each bag must contain only specific types of relics to preserve its magical energy.</p><p>After putting a relic in the correct bag, you will receive a diamond reward.</p><p>If the relic is put into a wrong bag, you will not receive any diamond.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.task * 1000,
+    data: {
+        tutorial: true,
+    },
     extensions: configs.AUDIO? [
         {
             type: jsPsychPlayAudio,
@@ -448,12 +456,13 @@ const tutorialFixationPoint = {
     show_validation_data: false,
     data: {
         my_trial_type: 'fixation-point',
+        tutorial: true
     }
 }
 
 const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
+    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
 <p>This is ${findMaxIndex(jsPsych.timelineVariable('bucket_probabilities')) === 0 ? "a" : "another"} relic. </p>
 <p>As we have not named the relic yet, assign a new name to this relic.</p>`,
     choices: () => [
@@ -482,10 +491,13 @@ const tutorialStateEstimation = {
 const tutorialShowIfNewState = {
     timeline: [{
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
+        stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
         <p>The new name is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')])}</b>.</p>`,
         choices: ["Continue"],
     }],
+    data: {
+        tutorial: true
+    },
     conditional_function: () => jsPsych
         .data.get()
         .filter({ my_trial_type: 'state-estimation' })
@@ -506,7 +518,7 @@ const tutorialActionSelection = {
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     randomize_bucket_order: false,
     text_prompt: () => `This relic belongs to the <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that bag.`,
-    data: { my_trial_type: 'dragndrop' },
+    data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
         const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
         const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
@@ -522,12 +534,12 @@ const tutorialRewardTrial = {
     <p>Well done! You have earned a magical reward!</p>` : `
     <img src="${configs.rewards.incorrect}" width="30%" /> <p>Oops! You have not earned a magical reward this time. You should drag the relic to the correct bag. </p>`,
     choices: ['Continue'],
-    data: { my_trial_type: 'reward' },
+    data: { my_trial_type: 'reward', tutorial: true },
 };
 
 const tutorialStateEstimation2 = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="${STIMULI_SIZE * 50}%" />
+    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
 <p>This is the same relic. </p>
 <p>So assign the same name to it.</p>`,
     choices: () => [
@@ -556,7 +568,7 @@ const tutorialActionSelection2 = {
     track_dragging: true,
     randomize_bucket_order: false,
     text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>.`,
-    data: { my_trial_type: 'dragndrop' },
+    data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
         const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
         const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
@@ -589,7 +601,7 @@ const tutorialProcedure = {
     timeline: !configs.DEBUGGING ? addObjectInRange(tutorialTimeline, fullscreenIfTrial, 1, tutorialTimeline.length - 1) : tutorialTimeline,
     timeline_variables: [
         {
-            stimuli: `<img src="${configs.tutorial_stimulus[0].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.tutorial_stimulus[0].image}" width="50%" />`,
             bucket_probabilities: [1],
             stimuli_path: configs.tutorial_stimulus[0].image,
             buckets: [configs.tutorial_baskets[0]],
@@ -598,7 +610,7 @@ const tutorialProcedure = {
             context: 0, 
         },
         {
-            stimuli: `<img src="${configs.tutorial_stimulus[1].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.tutorial_stimulus[1].image}" width="50%" />`,
             bucket_probabilities: [0, 1],
             stimuli_path: configs.tutorial_stimulus[1].image,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1]],
@@ -607,7 +619,7 @@ const tutorialProcedure = {
             context: 0, 
         },
         {
-            stimuli: `<img src="${configs.tutorial_stimulus[2].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.tutorial_stimulus[2].image}" width="50%" />`,
             bucket_probabilities: [0, 0, 1],
             stimuli_path: configs.tutorial_stimulus[2].image,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1], configs.tutorial_baskets[2]],
@@ -616,7 +628,7 @@ const tutorialProcedure = {
             context: 0, 
         },
         {
-            stimuli: `<img src="${configs.tutorial_stimulus[3].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.tutorial_stimulus[3].image}" width="50%" />`,
             bucket_probabilities: [0, 0, 0, 1],
             stimuli_path: configs.tutorial_stimulus[3].image,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1], configs.tutorial_baskets[2], configs.tutorial_baskets[3]],
@@ -655,7 +667,7 @@ const tutorial_prob_action_selection = {
     randomize_bucket_order: false,
     text_prompt: () => `<p>This relic belongs to <b>${jsPsych.timelineVariable('correct_bucket_name')}</b>. Drag the treasure to that bag.</p>
     <p>${jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will not be rewarded.</p>`,
-    data: { my_trial_type: 'dragndrop' },
+    data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
         data.is_correct = data.drop_bucket === jsPsych.timelineVariable('correct_bucket_index') && jsPsych.timelineVariable('is_correct');
     }
@@ -928,11 +940,11 @@ const stateEstimation = {
 }
 const showIfNewState = {
     timeline: [{
-        type: jsPsychHtmlKeyboardResponse,
-        stimulus: () => `${jsPsych.timelineVariable('stimuli')}
-    <p>The new name of this treasure is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')])}</b>.</p>
-    <p>Press any key to continue.</p>`,
+        type: jsPsychHtmlButtonResponse,
+        stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
+    <p>The new name of this treasure is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')])}</b>.</p>`,
     }],
+    choices: ['Continue'],
     conditional_function: () => jsPsych
         .data.get()
         .filter({ my_trial_type: 'state-estimation' })
@@ -1019,7 +1031,7 @@ const context1Procedure = {
     timeline: !configs.DEBUGGING ? addObjectInRange(context1Timeline, fullscreenIfTrial, 1, context1Timeline.length - 1) : context1Timeline,
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
-            stimuli: `<img src="${configs.context1_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.context1_stimulus[i].image}" width="50%" />`,
             bucket_probabilities: createProbabilisticDistribution(configs.REWARD_PROBABILITY, configs.context1_stimulus[i].correct_action, 2),
             stimuli_path: configs.context1_stimulus[i].image,
             context: 1,
@@ -1062,7 +1074,7 @@ const context2Procedure = {
     timeline: !configs.DEBUGGING ? addObjectInRange(context2Timeline, fullscreenIfTrial, 1, context2Timeline.length - 1) : context2Timeline,
     timeline_variables: Array.from({ length: 4 }).map((_, i) => (
         {
-            stimuli: `<img src="${configs.context2_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.context2_stimulus[i].image}" width="50%" />`,
             bucket_probabilities: createProbabilisticDistribution(configs.REWARD_PROBABILITY, configs.context2_stimulus[i].correct_action, 2),
             stimuli_path: configs.context2_stimulus[i].image,
             context: 2,
@@ -1120,7 +1132,7 @@ const context3Procedure = {
     timeline: !configs.DEBUGGING ? addObjectInRange(context3Timeline, fullscreenIfTrial, 1, context3Timeline.length - 1) : context3Timeline,
     timeline_variables: Array.from({ length: 8 }).map((_, i) => (
         {
-            stimuli: `<img src="${configs.context3_stimulus[i].image}" width="${STIMULI_SIZE * 100}%" />`,
+            stimuli: `<img src="${configs.context3_stimulus[i].image}" width="50%" />`,
             bucket_probabilities: createProbabilisticDistribution(configs.REWARD_PROBABILITY, configs.context3_stimulus[i].correct_action, 4),
             stimuli_path: configs.context3_stimulus[i].image,
             context: 3,
@@ -1133,12 +1145,12 @@ const context3Procedure = {
     data: { context: 3 },
 }
 
-
+// MARK: Survey
 const stateSurvey = {
     type: jsPsychSurveyMultiSelect,
     questions: [
         {
-            prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? ",
+            prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? (You may need to scroll down to see all options)",
             name: 'realTreasures',
             options: () => configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1])
                 .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2])),
