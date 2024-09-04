@@ -141,6 +141,7 @@ const jsPsych = initJsPsych({
     },
 });
 
+const skip_to = parseInt(jsPsych.data.getURLVariable('SKIP'));
 
 
 // Utility functions
@@ -1071,8 +1072,8 @@ const populate_context3_state_names = {
     type: jsPsychCallFunction,
     func: () => {
         // the the used context 1 and context 2 states to the last context
-        configs.all_context_state_names[3] = configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1] + 1)
-            .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2] + 1));
+        configs.all_context_state_names[3] = configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1])
+            .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2]));
         
         configs.all_context_assigned_indices[3] = configs.all_context_assigned_indices[1] + configs.all_context_assigned_indices[2] + 2;
     }
@@ -1110,8 +1111,8 @@ const stateSurvey = {
         {
             prompt: "After observing all the treasures and their reaction to certain buckets, you have assigned names to each types of treasures. Which of your name assignments do you think are actually real? ",
             name: 'realTreasures',
-            options: () => configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1] + 1)
-                .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2] + 1)),
+            options: () => configs.all_context_state_names[1].slice(0, configs.all_context_assigned_indices[1])
+                .concat(configs.all_context_state_names[2].slice(0, configs.all_context_assigned_indices[2])),
             required: true,
             horizontal: true
         },
@@ -1155,15 +1156,18 @@ const outro = {
 const timeline: any[] = [
     ... configs.PROLIFIC ? [prolific_data_trial] : [],
     preload,
-    welcome,
-    browser_check,
-    experiment_information,
-    recording_info,
-    eye_calibration_intro,
 
-    fullscreen,
-    ... configs.DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
-    // { type: jsPsychFullscreen, fullscreen_mode: true },
+    ...!(configs.DEBUGGING && skip_to >= 0) ? [
+        welcome,
+        browser_check,
+        experiment_information,
+        recording_info,
+        eye_calibration_intro,
+
+        fullscreen,
+        ... configs.DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
+        // { type: jsPsychFullscreen, fullscreen_mode: true },
+    ]: [],
 
     ... configs.TRACK_EYE ? [
         cam_warning,
@@ -1173,29 +1177,39 @@ const timeline: any[] = [
         calibration_points,
     ] : [],
     
-    tutorial_welcome,
-    tutorial_intro,
-    tutorial_task,
-    tutorialProcedure,
-    tutorial_prob_intro,
-    tutorial_prob_stage1,
-    tutorial_prob_intro2,
-    tutorial_prob_stage2,
-    tutorial_prob_intro3,
-    tutorial_prob_stage3,
-    tutorial_outro,
+    ... !(configs.DEBUGGING && skip_to >= 1) ? [
+        tutorial_welcome,
+        tutorial_intro,
+        tutorial_task,
+        tutorialProcedure,
+        tutorial_prob_intro,
+        tutorial_prob_stage1,
+        tutorial_prob_intro2,
+        tutorial_prob_stage2,
+        tutorial_prob_intro3,
+        tutorial_prob_stage3,
+        tutorial_outro,
+    ] : [],
     
-    main_game_intro,
-    main_game_intro2,
-    main_game_intro3,
-    main_game_intro4,
+    ... !(configs.DEBUGGING && skip_to >= 2) ? [
+        main_game_intro,
+        main_game_intro2,
+        main_game_intro3,
+        main_game_intro4,
     
-    context1Procedure,
-    context2Intro,
-    context2Procedure,
-    context3Intro,
-    populate_context3_state_names,
-    context3Procedure,
+        context1Procedure,
+    ] : [],
+
+    ... !(configs.DEBUGGING && skip_to >= 3) ? [
+        context2Intro,
+        context2Procedure,
+    ] : [],
+
+    ... !(configs.DEBUGGING && skip_to >= 4) ? [
+        context3Intro,
+        populate_context3_state_names,
+        context3Procedure,
+    ] : [],
     
     stateSurvey,
     stateActionSurvey,
