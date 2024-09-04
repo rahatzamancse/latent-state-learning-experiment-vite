@@ -48,3 +48,29 @@ export function findMaxIndex(arr: number[]): number {
       return currentValue > array[maxIndex] ? currentIndex : maxIndex;
   }, 0);
 }
+
+export const createProbabilisticDistribution = (
+    correctProbability: number,
+    i: number,
+    len: number
+): number[] => {
+    const otherProbability = (1 - correctProbability) / (len - 1);
+
+    return Array.from({ length: len }).map((_, index) => (index === i ? correctProbability : otherProbability));
+};
+
+
+export function pickProbabilisticIndex(probabilities: number[]): number {
+    const normalizedProbabilities = probabilities.map(p => p / probabilities.reduce((a, b) => a + b, 0));
+    // Create a cumulative sum array using reduce
+    const cumulative = normalizedProbabilities.reduce<number[]>((acc, prob, i) => {
+        acc.push(prob + (acc[i - 1] || 0));
+        return acc;
+    }, []);
+
+    // Generate a random number between 0 and 1
+    const random = Math.random();
+
+    // Find the first index where the random number is less than the cumulative probability
+    return cumulative.findIndex(cumProb => random < cumProb);
+};

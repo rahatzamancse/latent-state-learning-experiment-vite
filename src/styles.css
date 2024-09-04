@@ -32,3 +32,7 @@ input[type="checkbox"] {
 label {
     font-size: 2.7vh;
 }
+
+.tutorial-state-estimation-btn {
+    margin: 10px;
+}
