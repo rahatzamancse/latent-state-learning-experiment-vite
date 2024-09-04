@@ -261,7 +261,7 @@ const recording_info = {
 const eye_calibration_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Experiment</h1>
-<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions properly to help us get the most accurate experiment results.</p>`,
+<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions to help us get the most accurate experiment results.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.intro_3 * 1000,
     extensions: configs.AUDIO? [
@@ -280,7 +280,7 @@ const eye_calibration_intro = {
 const fullscreen = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Fullscreen</h1>
-<p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>`,
+<p>For best accuracy and your attention, it is mandatory that you play the game in fullscreen.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.fullscreen * 1000,
     extensions: configs.AUDIO ? [
@@ -636,7 +636,9 @@ const tutorialProcedure = {
 const tutorial_prob_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Sometimes, even if you select the right bag for a relic, you might not get a reward.</p>
-    <p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[0].name}", however, for approximately 1 out of 5 relics, you may not receive a reward after selecting the correct bag. You will see when you put all the relics in "${configs.tutorial_baskets[0].name}"</p>`,
+    <p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[0].name}".</p>
+    <p>However, for approximately 1 out of 5 relics, you may not receive a reward after selecting the correct bag.</p>
+    <p>You will see when you put all the relics in "${configs.tutorial_baskets[0].name}"</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
 }
@@ -651,7 +653,7 @@ const tutorial_prob_action_selection = {
     bucket_labels: () => jsPsych.timelineVariable('buckets').map((b: any) => b.name),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `<p>This relic belongs to <b>${configs.tutorial_baskets[0].name}</b>. Drag the treasure to that bag.</p>
+    text_prompt: () => `<p>This relic belongs to <b>${jsPsych.timelineVariable('correct_bucket_name')}</b>. Drag the treasure to that bag.</p>
     <p>${jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will not be rewarded.</p>`,
     data: { my_trial_type: 'dragndrop' },
     on_finish: (data: any) => {
@@ -676,6 +678,7 @@ const tutorial_prob_stage1 = {
         ...Array.from({ length: 1 }, () => ({
             is_correct: false,
             correct_bucket_index: 0,
+            correct_bucket_name: configs.tutorial_baskets[0].name,
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0]],
             stimulus: configs.tutorial_stimulus[0].image,
@@ -685,6 +688,7 @@ const tutorial_prob_stage1 = {
         ...Array.from({ length: 4 }, () => ({
             is_correct: true,
             correct_bucket_index: 0,
+            correct_bucket_name: configs.tutorial_baskets[0].name,
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0]],
             stimulus: configs.tutorial_stimulus[0].image,
@@ -696,7 +700,9 @@ const tutorial_prob_stage1 = {
 
 const tutorial_prob_intro2 = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[1].name}", however, for approximately 4 out of 5 relics, you may not receive a reward after selecting the correct bag. You will see when you put all the relics in "${configs.tutorial_baskets[1].name}"</p>`,
+    stimulus: `<p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[1].name}"</p>
+    <p>However, for approximately 4 out of 5 relics, you may not receive a reward after selecting the correct bag.</p>
+    <p>You will see when you put all the relics in "${configs.tutorial_baskets[1].name}"</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
 }
@@ -709,6 +715,7 @@ const tutorial_prob_stage2 = {
         ...Array.from({ length: 1 }, () => ({
             is_correct: true,
             correct_bucket_index: 0,
+            correct_bucket_name: configs.tutorial_baskets[1].name,
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
@@ -718,6 +725,7 @@ const tutorial_prob_stage2 = {
         ...Array.from({ length: 4 }, () => ({
             is_correct: false,
             correct_bucket_index: 0,
+            correct_bucket_name: configs.tutorial_baskets[1].name,
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
@@ -730,7 +738,8 @@ const tutorial_prob_stage2 = {
 const tutorial_prob_intro3 = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Finally in the next 10 rounds, you will see both relics.</p>
-    <p>For each relic, it will go to their corresponding bags. However, for approximately 1 out of 5 times, you may not receive a reward after selecting the correct bag. </p>`,
+    <p>For each relic, it will belong to their corresponding bags.</p>
+    <p>However, for approximately 1 out of 5 times for each relic, you may not receive a reward even after selecting the correct bag.</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
 }
@@ -744,6 +753,7 @@ const tutorial_prob_stage3 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[0].image,
+            correct_bucket_name: configs.tutorial_baskets[0].name,
             correct_bucket_index: 0,
             is_correct: true,
             incorrect_times: 2,
@@ -753,6 +763,7 @@ const tutorial_prob_stage3 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[0].image,
+            correct_bucket_name: configs.tutorial_baskets[0].name,
             correct_bucket_index: 0,
             is_correct: false,
             incorrect_times: 2,
@@ -762,6 +773,7 @@ const tutorial_prob_stage3 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
+            correct_bucket_name: configs.tutorial_baskets[1].name,
             correct_bucket_index: 1,
             is_correct: true,
             incorrect_times: 2,
@@ -771,6 +783,7 @@ const tutorial_prob_stage3 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0], configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
+            correct_bucket_name: configs.tutorial_baskets[1].name,
             correct_bucket_index: 1,
             is_correct: false,
             incorrect_times: 2,
