@@ -651,7 +651,8 @@ const tutorial_prob_action_selection = {
     bucket_labels: () => jsPsych.timelineVariable('buckets').map((b: any) => b.name),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `This relic belongs to <b>${configs.tutorial_baskets[0].name}</b>. Drag the treasure to that bag.`,
+    text_prompt: () => `<p>This relic belongs to <b>${configs.tutorial_baskets[0].name}</b>. Drag the treasure to that bag.</p>
+    <p>${jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will not be rewarded.</p>`,
     data: { my_trial_type: 'dragndrop' },
     on_finish: (data: any) => {
         data.is_correct = data.drop_bucket === jsPsych.timelineVariable('correct_bucket_index') && jsPsych.timelineVariable('is_correct');
@@ -678,6 +679,8 @@ const tutorial_prob_stage1 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0]],
             stimulus: configs.tutorial_stimulus[0].image,
+            incorrect_times: 1,
+            total_times: 5
         })),
         ...Array.from({ length: 4 }, () => ({
             is_correct: true,
@@ -685,6 +688,8 @@ const tutorial_prob_stage1 = {
             start_angle: 0,
             buckets: [configs.tutorial_baskets[0]],
             stimulus: configs.tutorial_stimulus[0].image,
+            incorrect_times: 1,
+            total_times: 5
         })),
     ],
 }
@@ -707,6 +712,8 @@ const tutorial_prob_stage2 = {
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
+            incorrect_times: 1,
+            total_times: 5
         })),
         ...Array.from({ length: 4 }, () => ({
             is_correct: false,
@@ -714,6 +721,8 @@ const tutorial_prob_stage2 = {
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
+            incorrect_times: 1,
+            total_times: 5
         })),
     ],
 }
@@ -737,6 +746,8 @@ const tutorial_prob_stage3 = {
             stimulus: configs.tutorial_stimulus[0].image,
             correct_bucket_index: 0,
             is_correct: true,
+            incorrect_times: 2,
+            total_times: 10
         })),
         ...Array.from({ length: 1 }, () => ({
             start_angle: 0,
@@ -744,6 +755,8 @@ const tutorial_prob_stage3 = {
             stimulus: configs.tutorial_stimulus[0].image,
             correct_bucket_index: 0,
             is_correct: false,
+            incorrect_times: 2,
+            total_times: 10
         })),
         ...Array.from({ length: 4 }, () => ({
             start_angle: 0,
@@ -751,6 +764,8 @@ const tutorial_prob_stage3 = {
             stimulus: configs.tutorial_stimulus[1].image,
             correct_bucket_index: 1,
             is_correct: true,
+            incorrect_times: 2,
+            total_times: 10
         })),
         ...Array.from({ length: 1 }, () => ({
             start_angle: 0,
@@ -758,6 +773,8 @@ const tutorial_prob_stage3 = {
             stimulus: configs.tutorial_stimulus[1].image,
             correct_bucket_index: 1,
             is_correct: false,
+            incorrect_times: 2,
+            total_times: 10
         })),
     ],
 }

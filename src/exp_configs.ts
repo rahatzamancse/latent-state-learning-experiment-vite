@@ -6,7 +6,7 @@ export const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import
 export const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'false') ? false : true;
 export const DOWNLOAD_AT_END = (import.meta.env.VITE_DOWNLOAD_AT_END && import.meta.env.VITE_DOWNLOAD_AT_END === 'true') ? true : false;
 
-export const REWARD_PROBABILITY = 0.8;
+export const REWARD_PROBABILITY = 1;
 
 if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
