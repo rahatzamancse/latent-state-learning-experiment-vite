@@ -852,7 +852,7 @@ let choiceOrders: number[] = [];
 const stateEstimation = {
     type: jsPsychHtmlButtonResponse,
     stimulus: jsPsych.timelineVariable('stimuli'),
-    show_button_after: 4000, 
+    show_button_after: configs.DEBUGGING ? 0:4000, 
     on_start: (trial: any) => {
         const shuffleResult = getShuffledArray(
             configs.all_context_state_names[jsPsych.timelineVariable('context')]
@@ -916,11 +916,11 @@ const actionSelection = {
     type: jsPsychDragndrop,
     element: jsPsych.timelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')]),
+    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')]) + (configs.DEBUGGING ? ` (${configs.BASKETS[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name})` : ""),
     buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
     bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
     show_labels: true,
-    bucket_labels: configs.BASKETS.map(b => b.name),
+    bucket_labels: () => jsPsych.timelineVariable('buckets').map((b: { name: string; }, i: number) => b.name + (configs.DEBUGGING ? ` (${Math.round(jsPsych.timelineVariable('bucket_probabilities')[i]*100)/100})` : "")),
     track_dragging: true,
     randomize_bucket_order: false,
     extensions: [ 
