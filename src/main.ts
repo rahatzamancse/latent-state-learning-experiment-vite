@@ -225,7 +225,7 @@ const welcome = {
 
 const experiment_information = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h1>Experiment</h1>
+    stimulus: `<h1>The Game</h1>
 <p>You will play a treasure sorting game.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.intro * 1000,
@@ -243,7 +243,7 @@ const experiment_information = {
 
 const recording_info = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h1>Experiment</h1>
+    stimulus: `<h1>The Game</h1>
 <p>During the playing, your activity and eye movements will be recorded.</p><p>However, your video will not be recorded.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.intro_2 * 1000,
@@ -259,8 +259,8 @@ const recording_info = {
 
 const eye_calibration_intro = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<h1>Experiment</h1>
-<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions to help us get the most accurate experiment results.</p>`,
+    stimulus: `<h1>The Game</h1>
+<p>In the next screen, your camera will be calibrated to track your eye properly.</p><p>Please follow the instructions to help us get the most accurate results.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.intro_3 * 1000,
     extensions: configs.AUDIO? [
@@ -302,11 +302,11 @@ const browser_check = {
     },
     exclusion_message: (data: any) => {
         if (data.mobile) {
-            return '<p>You must use a desktop/laptop computer to participate in this experiment.</p>';
+            return '<p>You must use a desktop/laptop computer to participate in this game.</p>';
         } else if (!data.webcam) {
-            return '<p>You must have an active webcam for this experiment. Make sure to allow your browser to access your camera at the beginning of the experiment.</p>'
+            return '<p>You must have an active webcam for this game. Make sure to allow your browser to access your camera at the beginning of the game.</p>'
         } else if (data.width < 1000 || data.height < 600) {
-            return '<p>Your screen is too small to participate in this experiment. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
+            return '<p>Your screen is too small to participate in this game. Please use a larger screen with at least resolutions of 1000x600 pixels.</p>';
         }
     },
 }
@@ -325,7 +325,7 @@ const cam_check = {
     instructions: `<p style="font-size: ${cam_font_size}vh">Position your head so that the webcam has a good view of your eyes.</p>
 <p style="font-size:${cam_font_size}vh">Center your face in the box and look directly towards the camera.</p>
 
-<p style="font-size:${cam_font_size}vh">It is important that you try and keep your head reasonably still throughout the experiment, so please take a moment to adjust your setup to be comfortable.</p>
+<p style="font-size:${cam_font_size}vh">It is important that you try and keep your head reasonably still throughout the game, so please take a moment to adjust your setup to be comfortable.</p>
 
 <p style="font-size:${cam_font_size}vh">When your face is centered in the box and the box is green, you can click to continue.</p>`,
     extensions: configs.AUDIO ? [
@@ -341,7 +341,7 @@ const cam_check = {
 const calibration_guide = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Camera Calibration</h1>
-    <p>Before we start the experiment, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>`,
+    <p>Before we start the game, we need to calibrate your camera.</p><p>Please follow the instructions carefully.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.cam_calibration * 1000,
     extensions: configs.AUDIO ? [
@@ -806,7 +806,7 @@ const tutorial_prob_stage3 = {
 
 
 // MARK: Main Intro
-// Main Experiment intro
+// Main game intro
 const tutorial_outro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Great job!</h1>
@@ -880,7 +880,7 @@ const main_game_intro4 = {
 }
 
 
-// MARK: Main Experiment Start
+// MARK: Main game Start
 const fixationPoint = {
     type: jsPsychWebgazerValidate,
     validation_points: [[0, 0]],
@@ -1189,7 +1189,7 @@ const prolificFinishTrial = {
 // outro
 const outro = {
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h1>Thank you for playing and participating in this experiment!</h1><p>You may now close the window.</p>`,
+    stimulus: `<h1>Thank you for playing and participating in this game!</h1><p>You may now close the window.</p>`,
 };
 
 
