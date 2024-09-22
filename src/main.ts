@@ -204,7 +204,8 @@ const preload = {
         ...[1, 2, 3, 4].map(i => `images/tutorial/stimulus/tutorial_treasures-${i}.png`),
         ...[1, 2, 3, 4].map(i => `images/tutorial/buckets/tutorial_basket-${i}.png`),
         ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => `images/stimulus/animal_${i}.png`),
-        ...["diamond", "nodiamond"].map(r => `images/reward/${r}.png`),
+        ...["diamond-blue", "nodiamond"].map(r => `images/reward/${r}.png`),
+        ...["webcam-laptop-removebg", "webcam-pc-removebg", "not-allowed-removebg", "well-lit-removebg"].map(i => `images/tutorial/${i}.png`),
     ],
     audio: ["quest_bag.mp3", "cam_calibration_2.mp3", "cam_calibration.mp3", "colorland_4bags.mp3", "colorland_help.mp3", "colorland.mp3", "context-1-good-job.mp3", "context-2-good-job.mp3", "fullscreen.mp3", "great_job.mp3", "intro_2.mp3", "intro_3.mp3", "intro.mp3", "quest.mp3", "relic1_bag1_2.mp3", "relic1_bag1.mp3", "relic_1.mp3", "relic_2_bag2_2.mp3", "relic_2_bag_2.mp3", "relic_2.mp3", "relic_3_bag3_2.mp3", "relic3_bag3.mp3", "relic_3.mp3", "relic4_bag4_2.mp3", "relic4_bag4.mp3", "relic_4.mp3", "survey-question.mp3", "task.mp3", "webgazer-calibration.mp3", "camtest.mp3"].map(a => `audio/${a}`),
     video: [],
@@ -239,6 +240,97 @@ const experiment_information = {
         // }]: [],
     ]
 }
+
+const audio_tests = [
+    {
+        correct_answer_index: 4,
+        correct_answer_audio: 'tiger',
+    },
+    {
+        correct_answer_index: 2,
+        correct_answer_audio: 'shark',
+    },
+].map(t => ({
+    timeline: [{
+        type: jsPsychHtmlButtonResponse,
+        stimulus: 'Click on the animal that you just heard. If you need to, adjust your volume and try again.',
+        choices: ['repeat', 'turtle', 'shark', 'fish', 'tiger'],
+        button_html: (choice: string) => {
+            if (choice === 'repeat') {
+                return '<img src="images/audio_test/replay.png" height="200px" width="200px"/>';
+            }
+            return `<img src="images/audio_test/${choice}.png" height="200px" width="200px"/>`;
+        },
+        data: {
+            my_trial_type: 'audio-test',
+            correct_answer: t.correct_answer_index,
+        },
+        extensions: configs.AUDIO ? [
+            {
+                type: jsPsychPlayAudio,
+                params: {
+                    audio_path: `audio/${t.correct_answer_audio}.mp3`,
+                }
+            }
+        ] : [],
+    }],
+    loop_function: () => {
+        const last_trial = jsPsych.data.get().filter({ my_trial_type: 'audio-test' }).last(1).values()[0];
+        return last_trial.response !== last_trial.correct_answer;
+    },
+}));
+
+
+const preparation_1 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Before you start</h1>
+    <p>Please make sure you have at least 20 minutes to complete the game.</p>
+    <img src="images/tutorial/time.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />`,
+    choices: ["Continue"],
+    // show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.intro_2 * 1000,
+    // extensions: [
+    //     ... AUDIO ? [{
+    //         type: jsPsychPlayAudio,
+    //         params: {
+    //             audio_path: 'audio/intro.mp3',
+    //         }
+    //     }]: [],
+    // ]
+}
+
+const preparation_2 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Before you start</h1>
+    <p>Though this game will not record any video, please make sure you have a <b>working webcam positioned at the horizontal-center of the screen</b> to record your eye movements.</p>
+    <img src="images/tutorial/webcam-laptop-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />
+    <img src="images/tutorial/webcam-pc-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />
+    `,
+    choices: ["Continue"],
+}
+
+const preparation_3 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Before you start</h1>
+    <p>Please make sure not to wear any eye glasses.</p>
+    <p>Tablets and phones are not allowed. Make sure your screen and camera is not moving.</p>
+    <img src="images/tutorial/not-allowed-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />`,
+    choices: ["Continue"],
+}
+
+const preparation_4 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<h1>Before you start</h1>
+    <p>Please make sure your room is well-lit.</p>
+    <img src="images/tutorial/well-lit-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />`,
+    choices: ["Continue"],
+}
+
+const all_preparations = [
+    preparation_1,
+    preparation_2,
+    preparation_3,
+    preparation_4,
+]
 
 
 const recording_info = {
@@ -685,7 +777,7 @@ const tutorial_prob_reward_trial = {
 const tutorial_prob_stage1 = {
     timeline: [tutorial_prob_action_selection, tutorial_prob_reward_trial],
     repetitions: 1,
-    randomize_order: true,
+    randomize_order: false,
     timeline_variables: [
         ...Array.from({ length: 1 }, () => ({
             is_correct: false,
@@ -731,7 +823,7 @@ const tutorial_prob_stage2 = {
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
-            incorrect_times: 1,
+            incorrect_times: 4,
             total_times: 5
         })),
         ...Array.from({ length: 4 }, () => ({
@@ -741,7 +833,7 @@ const tutorial_prob_stage2 = {
             start_angle: 180,
             buckets: [configs.tutorial_baskets[1]],
             stimulus: configs.tutorial_stimulus[1].image,
-            incorrect_times: 1,
+            incorrect_times: 4,
             total_times: 5
         })),
     ],
@@ -1200,6 +1292,8 @@ const timeline: any[] = [
 
     ...!(configs.DEBUGGING && skip_to >= 0) ? [
         welcome,
+        ...audio_tests,
+        ...all_preparations,
         browser_check,
         experiment_information,
         recording_info,

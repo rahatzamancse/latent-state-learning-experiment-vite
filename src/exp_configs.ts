@@ -62,13 +62,13 @@ export const tutorial_baskets = [
 ];
 export const BASKETS_TMP = [
     {
-        color: "blue",
-        image: "images/baskets/basket-blue.png",
+        color: "green",
+        image: "images/baskets/basket-green.png",
         name: "Emerald Vault",
     },
     {
-        color: "green",
-        image: "images/baskets/basket-green.png",
+        color: "blue",
+        image: "images/baskets/basket-blue.png",
         name: "Azure Haven",
     },
     {
@@ -127,7 +127,7 @@ export const context3_stimulus = [
 }));
 
 export const rewards = {
-    correct: "images/reward/diamond.png",
+    correct: "images/reward/diamond-blue.png",
     incorrect: "images/reward/nodiamond.png",
 }
 
