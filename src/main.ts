@@ -1294,12 +1294,12 @@ const timeline: any[] = [
         welcome,
         ...audio_tests,
         ...all_preparations,
+        fullscreen,
         browser_check,
         experiment_information,
         recording_info,
         eye_calibration_intro,
 
-        fullscreen,
         ... configs.DEBUGGING ? [] : [{ type: jsPsychFullscreen, fullscreen_mode: true }],
         // { type: jsPsychFullscreen, fullscreen_mode: true },
     ]: [],
