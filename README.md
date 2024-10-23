@@ -62,7 +62,7 @@ This is a psychological experiment developed with jsPsych and Vite, to understan
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-If you need the programming background on how this project (Vite + JsPsych) work, please read the [introduction to Vite+Typescript]() document. Then, to learn about how JsPsych projects can be integrated with a Vite project, see the [Designing Bugless Experiments with Vite+JsPsych]() document.
+If you need the programming background on how this project (Vite + JsPsych) work, please read the [introduction to Vite+Typescript](https://rahatzamancse.netlify.app/posts/intro-to-vite-typescript/) document. Then, to learn about how JsPsych projects can be integrated with a Vite project, see the [Designing Bugless Experiments with Vite+JsPsych](https://rahatzamancse.netlify.app/posts/jspsych-vite-typescript/) document.
 
 ### Built With
 
