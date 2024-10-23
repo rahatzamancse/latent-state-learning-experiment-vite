@@ -57,10 +57,12 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-To be filled in later...
+This is a psychological experiment developed with jsPsych and Vite, to understand the cognitive process and attention variation, behavioral rigidity among the heterogeneity of autism spectrum disorder
+(ASD).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+If you need the programming background on how this project (Vite + JsPsych) work, please read the [introduction to Vite+Typescript]() document. Then, to learn about how JsPsych projects can be integrated with a Vite project, see the [Designing Bugless Experiments with Vite+JsPsych]() document.
 
 ### Built With
 
@@ -72,7 +74,6 @@ To be filled in later...
 * [PNPM](https://pnpm.io/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- GETTING STARTED -->
@@ -110,6 +111,36 @@ pnpm run build
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Hosting on [Netlify](https://www.netlify.com/) and Datastore on [Google Firestore](https://cloud.google.com/firestore)
+
+Pavlovia is a very popular site for hosting experiments and managing response data on one platform. However, there are better solutions at lower costs if you are able to manually host the site and manage the data yourself.
+
+After running the build command, you will have a folder called `build` that contains all the static HTML, CSS, and JavaScript files needed for your website. You can host these files on any site hosting platform. I have chosen to use Netlify for this purpose. Netlify is a user-friendly platform that allows you to deploy and host your website for free, with generous traffic limits that are usually sufficient for experimental purposes.
+
+Netlify will host your website, making it accessible to users, but it does not provide a database to store response data in its free tier. To store the response data, we use Google Cloud Firestore. Firestore is a flexible, scalable database for mobile, web, and server development from Google Cloud.
+
+To use Firestore, you need to have a Google account. Follow these steps to set it up:
+1. Go to the [Firestore Console](https://console.firebase.google.com/).
+2. Create a new project or select an existing one.
+3. In the Firestore section, create a new database.
+4. You will receive an API key, which you will use to connect your website to Firestore.
+
+The API key is stored in the `.env.local` file in the root of the project. For security reasons, it is not included in the repository. That env file also includes some other variables that can control the project behavior. Here is a sample env file:
+
+```bash
+VITE_FIREBASE_API_KEY=<API_KEY> # The API key for the Firestore database
+VITE_LOCAL_TESTING=true         # Set to true if you want to run the experiment locally
+VITE_DEBUGGING=true             # Speeds some trials up by removing the time constraints, helpful while debugging
+
+VITE_PROLIFIC=false             # Set to true if you want to use Prolific as the participant ID provider, you need to add the id to the src/main.ts file
+VITE_TRACK_EYE=false            # Set to true if you want to track the eye movements
+VITE_UPLOAD_FIRESTORE=false     # Set to true if you want to upload the response data to Firestore
+VITE_AUDIO=true                 # Set to true if you want to play audio files
+VITE_DOWNLOAD_AT_END=true       # Set to true if you want to download the response data at the end of the experiment
+```
+
+With the API key, you can use Firestore's JavaScript API to connect to the real-time database and store the response data from your experiments. This setup allows you to have full control over your data and hosting environment, often at a lower cost than using an all-in-one platform like Pavlovia.
 
 
 ### Top contributors:

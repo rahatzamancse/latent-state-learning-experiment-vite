@@ -1,17 +1,20 @@
+// Import the jspsych module
 import { initJsPsych } from 'jspsych';
+
+// Import all the jspsych plugins used in the experiment
 import jsPsychExtensionWebgazer from '@jspsych/extension-webgazer';
 import jsPsychExtensionMouseTracking from '@jspsych/extension-mouse-tracking';
 import jsPsychWebgazerInitCamera from '@jspsych/plugin-webgazer-init-camera';
 import jsPsychWebgazerCalibrate from '@jspsych/plugin-webgazer-calibrate';
 import jsPsychWebgazerValidate from '@jspsych/plugin-webgazer-validate';
 import jsPsychPreload from '@jspsych/plugin-preload';
-import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response';
-// import jsPsychInstructions from '@jspsych/plugin-instructions';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
 import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
 import jsPsychHtmlButtonResponse from './plugins/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
+
+// Import our developed plugins and extensions, these can be found in the ./plugins and ./extensions directories
 import jsPsychDragndrop from './plugins/plugin-dragndrop';
 import jsPsychPlayAudio from './extensions/extension-play-audio';
 import jsPsychHelpButton from './extensions/extension-help-button';
@@ -19,20 +22,29 @@ import jsPsychHelpButton from './extensions/extension-help-button';
 import jsPsychCallFunction from '@jspsych/plugin-call-function';
 import jsPsychProlificData from './plugins/plugin-save-prolific-data';
 import jsPsychProlificFinish from './plugins/plugin-prolific-completed';
+import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response';
 
+// Initialize the firebase app and the firestore database
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
+// Import the experiment configurations
 import * as configs from "./exp_configs";
 
+// Import some utility functions
 import { getShuffledArray, addObjectInRange, findMaxIndex, createProbabilisticDistribution, pickProbabilisticIndex } from './utils';
 
+// Import the styles for the experiment
 import './styles.css';
 
+// Initialize the firestore database with the API key
 const db = configs.UPLOAD_FIRESTORE ? getFirestore(initializeApp(configs.firebaseConfig)) : undefined;
 const docRef = configs.UPLOAD_FIRESTORE ? doc(collection(db!, "experiments")) : undefined;
 
+// Firebase charges by the number of reads/writes. To track that per experiments, we use this NUMBER_OF_WRITES variable
 let NUMBER_OF_WRITES = 0;
+// Initialize the experiment document in firestore
+// The document will store the trials, the date, the time, and whether the experiment is running locally
 if (configs.UPLOAD_FIRESTORE) {
     setDoc(docRef!, {
         trials: [],
@@ -46,7 +58,6 @@ if (configs.UPLOAD_FIRESTORE) {
         NUMBER_OF_WRITES++;
     })
 }
-
 
 // Initialize Extensions
 const extensions = [];
@@ -85,6 +96,7 @@ if (configs.AUDIO)
 // Initialize jsPsych
 const jsPsych = initJsPsych({
     extensions: extensions,
+    // After each trial, we push the trial data to firestore
     on_data_update: (data: any) => {
         // Check if fullscreen.
         // Note: This is replaced with the fullscreenIfTrial.
@@ -101,6 +113,7 @@ const jsPsych = initJsPsych({
             delete trialData.no_upload;
             return trialData;
         }
+        // Firebase does not support nested arrays, so we need to convert them to a flat js object structure
         function convertNestedArrays(obj: any) {
             for (const key in obj) {
                 if (Array.isArray(obj[key])) {
@@ -114,6 +127,7 @@ const jsPsych = initJsPsych({
             }
         }
         convertNestedArrays(trialData);
+        // If the experiment is set to upload the data to firestore, we do so
         if (configs.UPLOAD_FIRESTORE) {
             updateDoc(docRef!, {
                 trials: arrayUnion(trialData),
@@ -123,11 +137,13 @@ const jsPsych = initJsPsych({
                 NUMBER_OF_WRITES++;
             });
         }
+        // Otherwise we just print the data to the console
         else {
             console.log("Dry run: ", trialData);
         }
         return trialData;
     },
+    // After the experiment is finished, we print the number of writes to firestore and download the data as a json file if the user wants to
     on_finish: () => {
         console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
         if (configs.DOWNLOAD_AT_END)
@@ -141,6 +157,7 @@ const jsPsych = initJsPsych({
     },
 });
 
+// Debugging convenient functionality that help to skip to certain parts of the experiment
 const skip_to = parseInt(jsPsych.data.getURLVariable('SKIP'));
 if (configs.DEBUGGING && skip_to > 1) {
     // simulate context 1
@@ -150,9 +167,8 @@ if (configs.DEBUGGING && skip_to > 2) {
     configs.all_context_assigned_indices[2] = 2;
 }
 
-
-
 // Utility functions
+// Get the outcome of the last dragndrop trial
 function getOutcome() {
     return jsPsych
         .data.get()
@@ -161,6 +177,7 @@ function getOutcome() {
         .values()[0]
         .is_correct
 }
+// Get the outcome of the last state estimation trial
 function getLastTrialTreasureName(all_treasure_names: string[]) {
     return jsPsych.data.get()
         .filter({ my_trial_type: 'state-estimation' })
