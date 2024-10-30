@@ -274,9 +274,9 @@ const audio_tests = [
         choices: ['repeat', 'turtle', 'shark', 'fish', 'tiger'],
         button_html: (choice: string) => {
             if (choice === 'repeat') {
-                return '<img src="images/audio_test/replay.png" height="200px" width="200px"/>';
+                return '<img class="audio-test-btn" src="images/audio_test/replay.png" height="200px" width="200px" style="cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.border=\'2px solid #000\'" onmouseout="this.style.border=\'2px solid transparent\'"/>';
             }
-            return `<img src="images/audio_test/${choice}.png" height="200px" width="200px"/>`;
+            return `<img class="audio-test-btn" src="images/audio_test/${choice}.png" height="200px" width="200px" style="cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.border=\'2px solid #000\'" onmouseout="this.style.border=\'2px solid transparent\'"/>`;
         },
         data: {
             my_trial_type: 'audio-test',
@@ -328,8 +328,9 @@ const preparation_2 = {
 const preparation_3 = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Before you start</h1>
-    <p>Please make sure not to wear any eye glasses.</p>
-    <p>Tablets and phones are not allowed. Make sure your screen and camera is not moving.</p>
+    <p>It is highly recommended that you do not wear any eye glasses.</p>
+    <p>Eye-glasses highly affect the accuracy of the eye tracking.</p>
+    <p>Please do not use tablets and phones. Make sure your screen and camera is not moving.</p>
     <img src="images/tutorial/not-allowed-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />`,
     choices: ["Continue"],
 }
@@ -388,7 +389,7 @@ const eye_calibration_intro = {
 const fullscreen = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Fullscreen</h1>
-<p>For best accuracy and your attention, it is mandatory that you play the game in fullscreen.</p>`,
+<p>For best accuracy and your attention, it is highly recommended that you play the game in fullscreen.</p>`,
     choices: ["Continue"],
     show_button_after: configs.DEBUGGING ? 10 : configs.AUDIO_DURATIONS.fullscreen * 1000,
     extensions: configs.AUDIO ? [
@@ -577,13 +578,13 @@ const tutorialStateEstimation = {
     choices: () => [
         // all previous relics
         ...configs.all_context_state_names[jsPsych.timelineVariable('context')].slice(0, configs.all_context_assigned_indices[jsPsych.timelineVariable('context')]),
-        'Assign new relic name'
+        'Generate a new name'
     ],
     button_html: (choice: string) => {
         if (choice === configs.all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_state_index')]) {
             return `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>`;
         }
-        if (choice === 'Assign new relic name') {
+        if (choice === 'Generate a new name') {
             return `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>`;
         }
         return `<button class="jspsych-btn tutorial-state-estimation-btn" disabled>${choice}</button>`;
@@ -653,7 +654,7 @@ const tutorialStateEstimation2 = {
 <p>So assign the same name to it.</p>`,
     choices: () => [
         ...configs.all_context_state_names[jsPsych.timelineVariable('context')].slice(0, jsPsych.timelineVariable('correct_state_index')+1),
-        'Assign new relic name'
+        'Generate a new name'
     ],
     button_html: (choice: string) => choice === configs.all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_state_index')] ? `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>` : `<button class="jspsych-btn tutorial-state-estimation-btn" disabled>${choice}</button>`,
     data: { my_trial_type: 'state-estimation', tutorial: true },
@@ -758,7 +759,7 @@ const tutorial_prob_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Sometimes, even if you select the right bag for a relic, you might not get a reward.</p>
     <p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[0].name}".</p>
-    <p>However, for approximately 1 out of 5 relics, you may not receive a reward after selecting the correct bag.</p>
+    <p>However, for approximately 4 out of 5 relics, you receive a reward after selecting the correct bag.</p>
     <p>You will see when you put all the relics in "${configs.tutorial_baskets[0].name}"</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
@@ -775,7 +776,7 @@ const tutorial_prob_action_selection = {
     track_dragging: true,
     randomize_bucket_order: false,
     text_prompt: () => `<p>This relic belongs to <b>${jsPsych.timelineVariable('correct_bucket_name')}</b>. Drag the treasure to that bag.</p>
-    <p>${jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will not be rewarded.</p>`,
+    <p>${jsPsych.timelineVariable('total_times') - jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will be rewarded.</p>`,
     data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
         data.is_correct = data.drop_bucket === jsPsych.timelineVariable('correct_bucket_index') && jsPsych.timelineVariable('is_correct');
@@ -822,7 +823,7 @@ const tutorial_prob_stage1 = {
 const tutorial_prob_intro2 = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<p>For the next 5 relics, they will all belong to "${configs.tutorial_baskets[1].name}"</p>
-    <p>However, for approximately 4 out of 5 relics, you may not receive a reward after selecting the correct bag.</p>
+    <p>However, for approximately 1 out of 5 relics, you will receive a reward after selecting the correct bag.</p>
     <p>You will see when you put all the relics in "${configs.tutorial_baskets[1].name}"</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
@@ -860,7 +861,7 @@ const tutorial_prob_intro3 = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<p>Finally in the next 10 rounds, you will see both relics.</p>
     <p>For each relic, it will belong to their corresponding bags.</p>
-    <p>However, for approximately 1 out of 5 times for each relic, you may not receive a reward even after selecting the correct bag.</p>`,
+    <p>However, for approximately 4 out of 5 times for each relic, you will receive a reward after selecting the correct bag.</p>`,
     choices: ['Continue'],
     show_button_after: configs.DEBUGGING ? 10: 1000,
 }
