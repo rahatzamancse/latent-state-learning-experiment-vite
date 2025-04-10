@@ -2,6 +2,29 @@ import { JsPsych, JsPsychPlugin, ParameterType, TrialType } from "jspsych";
 
 const info = <const>{
   name: "dragndrop",
+  version: "1.0.0",
+  data: {
+    drag_data: {
+      type: ParameterType.COMPLEX,
+      default: undefined,
+    },
+    buckets: {
+      type: ParameterType.COMPLEX,
+      default: undefined,
+    },
+    drop_bucket: {
+      type: ParameterType.INT,
+      default: undefined,
+    },
+    stimuli: {
+      type: ParameterType.COMPLEX,
+      default: undefined,
+    },
+    rt: {
+      type: ParameterType.INT,
+      default: undefined,
+    },
+  },
   parameters: {
     // types: BOOL, STRING, INT, FLOAT, FUNCTION, KEY, KEYS, SELECT, HTML_STRING, IMAGE, AUDIO, VIDEO, OBJECT, COMPLEX
     element: {

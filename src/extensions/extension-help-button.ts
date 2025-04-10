@@ -1,4 +1,4 @@
-import { JsPsych, JsPsychExtension, JsPsychExtensionInfo } from "jspsych";
+import { JsPsych, JsPsychExtension, JsPsychExtensionInfo, ParameterType } from "jspsych";
 import './extension-help-button.css'
 
 interface InitializeParameters { }
@@ -26,6 +26,12 @@ interface OnFinishParameters { }
 class HelpButtonExtension implements JsPsychExtension {
     static info: JsPsychExtensionInfo = {
         name: "help-button",
+        version: "1.0.0",
+        data: {
+            header: {
+                type: ParameterType.STRING,
+            },
+        },
     };
 
     modal_interaction_data: { event: "opened" | "closed", time: number }[] = [];

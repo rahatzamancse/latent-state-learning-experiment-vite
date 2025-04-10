@@ -1,4 +1,4 @@
-import { JsPsych, JsPsychExtension, JsPsychExtensionInfo } from "jspsych";
+import { JsPsych, JsPsychExtension, JsPsychExtensionInfo, ParameterType } from "jspsych";
 
 interface InitializeParameters {}
 
@@ -21,9 +21,15 @@ interface OnFinishParameters {}
 class PlayAudioExtension implements JsPsychExtension {
   static info: JsPsychExtensionInfo = {
     name: "play-audio",
+    version: "1.0.0",
+    data: {
+      audio_path: {
+        type: ParameterType.STRING,
+      },
+    },
   };
   
-  audio: any;
+  player: any;
   constructor(private jsPsych: JsPsych) {}
 
   initialize = (_: InitializeParameters): Promise<void> => {
@@ -35,30 +41,13 @@ class PlayAudioExtension implements JsPsychExtension {
 
   on_start = (_: OnStartParameters): void => {};
 
-  on_load = ({audio_path}: OnLoadParameters): void => {
-    console.log("on_load")
-    const context = this.jsPsych.pluginAPI.audioContext();
-
-    // load audio file
-    this.jsPsych.pluginAPI
-      .getAudioBuffer(audio_path)
-      .then((buffer) => {
-        this.audio = context.createBufferSource();
-        this.audio.buffer = buffer;
-        this.audio.connect(context.destination);
-        this.audio.start(context.currentTime);
-      })
-      .catch((err) => {
-        console.error(
-          `Failed to load audio file "${audio_path}". Try checking the file path. We recommend using the preload plugin to load audio files.`
-        );
-        console.error(err);
-      });
-
+  on_load = async ({audio_path}: OnLoadParameters) => {
+    this.player = await this.jsPsych.pluginAPI.getAudioPlayer(audio_path);
+    this.player.play();
   };
 
   on_finish = (_: OnFinishParameters): { [key: string]: any } => {
-    this.audio.stop();
+    this.player.stop();
     return {};
   };
 }

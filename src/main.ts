@@ -11,10 +11,10 @@ import jsPsychPreload from '@jspsych/plugin-preload';
 import jsPsychFullscreen from '@jspsych/plugin-fullscreen';
 import jsPsychSurveyMultiSelect from '@jspsych/plugin-survey-multi-select';
 import jsPsychSurveyMultiChoice from '@jspsych/plugin-survey-multi-choice';
-import jsPsychHtmlButtonResponse from './plugins/plugin-html-button-response';
 import jsPsychBrowserCheck from '@jspsych/plugin-browser-check';
 
 // Import our developed plugins and extensions, these can be found in the ./plugins and ./extensions directories
+import jsPsychHtmlButtonResponse from './plugins/plugin-html-button-response';
 import jsPsychDragndrop from './plugins/plugin-dragndrop';
 import jsPsychPlayAudio from './extensions/extension-play-audio';
 import jsPsychHelpButton from './extensions/extension-help-button';
@@ -87,7 +87,7 @@ if (configs.AUDIO)
 // const INACTIVE_TIMEOUT = 30 * 60 * 1000;
 // function trialTimeOut(trial: any) {
 //     console.error(`Trial timed out: ${trial}`);
-//     jsPsych.endCurrentTimeline();
+//     jsPsych.abortCurrentTimeline();
 // }
 // 
 
@@ -102,7 +102,7 @@ const jsPsych = initJsPsych({
         // Note: This is replaced with the fullscreenIfTrial.
         // const interaction_data = jsPsych.data.getInteractionData()
         // if (interaction_data.values().slice(lastInteractionDataIndex).some((v: any) => v.event === "fullscreenexit")) {
-        //     jsPsych.endExperiment("The experiment has ended because you exited fullscreen mode.");
+        //     jsPsych.abortExperiment("The experiment has ended because you exited fullscreen mode.");
         // }
         // lastInteractionDataIndex = interaction_data.values().length;
 
@@ -328,7 +328,7 @@ const preparation_2 = {
 const preparation_3 = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<h1>Before you start</h1>
-    <p>It is highly recommended that you do not wear any eye glasses.</p>
+    <p>It is highly recommended that you do not wear any eye glasses. You can use Contact Lenses. </p>
     <p>Eye-glasses highly affect the accuracy of the eye tracking.</p>
     <p>Please do not use tablets and phones. Make sure your screen and camera is not moving.</p>
     <img src="images/tutorial/not-allowed-removebg.png" width="220px" height="220px" style="margin-left: 40px; margin-right: 40px" />`,
@@ -572,16 +572,16 @@ const tutorialFixationPoint = {
 
 const tutorialStateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
-<p>This is ${findMaxIndex(jsPsych.timelineVariable('bucket_probabilities')) === 0 ? "a" : "another"} relic. </p>
+    stimulus: () => `<img src="${jsPsych.evaluateTimelineVariable('stimuli_path')}" width="25%" />
+<p>This is ${findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities')) === 0 ? "a" : "another"} relic. </p>
 <p>As we have not named the relic yet, assign a new name to this relic.</p>`,
     choices: () => [
         // all previous relics
-        ...configs.all_context_state_names[jsPsych.timelineVariable('context')].slice(0, configs.all_context_assigned_indices[jsPsych.timelineVariable('context')]),
+        ...configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')].slice(0, configs.all_context_assigned_indices[jsPsych.evaluateTimelineVariable('context')]),
         'Generate a new name'
     ],
     button_html: (choice: string) => {
-        if (choice === configs.all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_state_index')]) {
+        if (choice === configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')][jsPsych.evaluateTimelineVariable('correct_state_index')]) {
             return `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>`;
         }
         if (choice === 'Generate a new name') {
@@ -591,18 +591,18 @@ const tutorialStateEstimation = {
     },
     data: { my_trial_type: 'state-estimation', tutorial: true },
     on_finish: (data: any) => {
-        const tutorial_states = configs.all_context_state_names[jsPsych.timelineVariable('context')];
+        const tutorial_states = configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')];
         data.new_state = true;
-        configs.all_context_assigned_indices[jsPsych.timelineVariable('context')]++;
-        data.estimated_state = tutorial_states[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))];
+        configs.all_context_assigned_indices[jsPsych.evaluateTimelineVariable('context')]++;
+        data.estimated_state = tutorial_states[findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities'))];
     }
 }
 
 const tutorialShowIfNewState = {
     timeline: [{
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
-        <p>The new name is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')])}</b>.</p>`,
+        stimulus: () => `<img src="${jsPsych.evaluateTimelineVariable('stimuli_path')}" width="25%" />
+        <p>The new name is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')])}</b>.</p>`,
         choices: ["Continue"],
     }],
     data: {
@@ -618,19 +618,19 @@ const tutorialShowIfNewState = {
 
 const tutorialActionSelection = {
     type: jsPsychDragndrop,
-    element: jsPsych.timelineVariable('stimuli_path'),
+    element: () => jsPsych.evaluateTimelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')]),
-    buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
+    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')]),
+    buckets: () => jsPsych.evaluateTimelineVariable('buckets').map((b: { image: string; }) => b.image),
     show_labels: true,
     bucket_labels: configs.tutorial_baskets.map(b => b.name),
     track_dragging: true,
-    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
+    bucket_start_angle: jsPsych.evaluateTimelineVariable('bucket_start_angle'),
     randomize_bucket_order: false,
-    text_prompt: () => `This relic belongs to the <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that bag.`,
+    text_prompt: () => `This relic belongs to the <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities'))].name}</b>. Drag the treasure to that bag.`,
     data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
-        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const bucket_probs = jsPsych.evaluateTimelineVariable('bucket_probabilities');
         const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
         data.bucket_probs = bucket_probs;
         data.correct_bucket_index = correct_bucket_index;
@@ -649,38 +649,38 @@ const tutorialRewardTrial = {
 
 const tutorialStateEstimation2 = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
+    stimulus: () => `<img src="${jsPsych.evaluateTimelineVariable('stimuli_path')}" width="25%" />
 <p>This is the same relic. </p>
 <p>So assign the same name to it.</p>`,
     choices: () => [
-        ...configs.all_context_state_names[jsPsych.timelineVariable('context')].slice(0, jsPsych.timelineVariable('correct_state_index')+1),
+        ...configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')].slice(0, jsPsych.evaluateTimelineVariable('correct_state_index')+1),
         'Generate a new name'
     ],
-    button_html: (choice: string) => choice === configs.all_context_state_names[jsPsych.timelineVariable('context')][jsPsych.timelineVariable('correct_state_index')] ? `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>` : `<button class="jspsych-btn tutorial-state-estimation-btn" disabled>${choice}</button>`,
+    button_html: (choice: string) => choice === configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')][jsPsych.evaluateTimelineVariable('correct_state_index')] ? `<button class="jspsych-btn tutorial-state-estimation-btn">${choice}</button>` : `<button class="jspsych-btn tutorial-state-estimation-btn" disabled>${choice}</button>`,
     data: { my_trial_type: 'state-estimation', tutorial: true },
     on_finish: (data: any) => {
-        const tutorial_states = configs.all_context_state_names[jsPsych.timelineVariable('context')];
+        const tutorial_states = configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')];
         data.new_state = false;
-        data.estimated_state = tutorial_states[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))];
+        data.estimated_state = tutorial_states[findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities'))];
     }
 }
 
 
 const tutorialActionSelection2 = {
     type: jsPsychDragndrop,
-    element: jsPsych.timelineVariable('stimuli_path'),
+    element: () => jsPsych.evaluateTimelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')]),
-    buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
+    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')]),
+    buckets: () => jsPsych.evaluateTimelineVariable('buckets').map((b: { image: string; }) => b.image),
     show_labels: true,
     bucket_labels: configs.tutorial_baskets.map(b => b.name),
-    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
+    bucket_start_angle: jsPsych.evaluateTimelineVariable('bucket_start_angle'),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name}</b>.`,
+    text_prompt: () => `Good job on your previous relic sorting!</p><p>Let's drag the relic one more time to <b>${configs.tutorial_baskets[findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities'))].name}</b>.`,
     data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
-        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const bucket_probs = jsPsych.evaluateTimelineVariable('bucket_probabilities');
         const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
         data.bucket_probs = bucket_probs;
         data.correct_bucket_index = correct_bucket_index;
@@ -766,20 +766,20 @@ const tutorial_prob_intro = {
 }
 const tutorial_prob_action_selection = {
     type: jsPsychDragndrop,
-    element: jsPsych.timelineVariable('stimulus'),
+    element: () => jsPsych.evaluateTimelineVariable('stimulus'),
     show_element_label: true,
     element_label: configs.all_context_state_names[0][0],
-    buckets: () => jsPsych.timelineVariable('buckets').map((b: any) => b.image),
+    buckets: () => jsPsych.evaluateTimelineVariable('buckets').map((b: any) => b.image),
     show_labels: true,
-    bucket_start_angle: jsPsych.timelineVariable('start_angle'),
-    bucket_labels: () => jsPsych.timelineVariable('buckets').map((b: any) => b.name),
+    bucket_start_angle: jsPsych.evaluateTimelineVariable('start_angle'),
+    bucket_labels: () => jsPsych.evaluateTimelineVariable('buckets').map((b: any) => b.name),
     track_dragging: true,
     randomize_bucket_order: false,
-    text_prompt: () => `<p>This relic belongs to <b>${jsPsych.timelineVariable('correct_bucket_name')}</b>. Drag the treasure to that bag.</p>
-    <p>${jsPsych.timelineVariable('total_times') - jsPsych.timelineVariable('incorrect_times')}/${jsPsych.timelineVariable('total_times')} times, you will be rewarded.</p>`,
+    text_prompt: () => `<p>This relic belongs to <b>${jsPsych.evaluateTimelineVariable('correct_bucket_name')}</b>. Drag the treasure to that bag.</p>
+    <p>${jsPsych.evaluateTimelineVariable('total_times') - jsPsych.evaluateTimelineVariable('incorrect_times')}/${jsPsych.evaluateTimelineVariable('total_times')} times, you will be rewarded.</p>`,
     data: { my_trial_type: 'dragndrop', tutorial: true },
     on_finish: (data: any) => {
-        data.is_correct = data.drop_bucket === jsPsych.timelineVariable('correct_bucket_index') && jsPsych.timelineVariable('is_correct');
+        data.is_correct = data.drop_bucket === jsPsych.evaluateTimelineVariable('correct_bucket_index') && jsPsych.evaluateTimelineVariable('is_correct');
     }
 };
 
@@ -1003,13 +1003,13 @@ let choiceOrders: number[] = [];
 
 const stateEstimation = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: jsPsych.timelineVariable('stimuli'),
+    stimulus: () => jsPsych.evaluateTimelineVariable('stimuli'),
     show_button_after: configs.DEBUGGING ? 0:4000, 
     on_start: (trial: any) => {
         const shuffleResult = getShuffledArray(
-            configs.all_context_state_names[jsPsych.timelineVariable('context')]
-                .slice(0, configs.all_context_assigned_indices[jsPsych.timelineVariable('context')]));
-        if (jsPsych.timelineVariable('context') !== 3)
+            configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')]
+                .slice(0, configs.all_context_assigned_indices[jsPsych.evaluateTimelineVariable('context')]));
+        if (jsPsych.evaluateTimelineVariable('context') !== 3)
             trial.choices = shuffleResult.shuffledArray.concat("Assign new treasure name");
         else
             trial.choices = shuffleResult.shuffledArray;
@@ -1018,7 +1018,7 @@ const stateEstimation = {
     choices: [],
     prompt: "",
     on_finish: (data: any) => {
-        const currentContext = jsPsych.timelineVariable('context');
+        const currentContext = jsPsych.evaluateTimelineVariable('context');
         const context_state_names = configs.all_context_state_names[currentContext];
         const response = choiceOrders[data.response];
         delete data.choiceOriginalIndices;
@@ -1051,8 +1051,8 @@ const stateEstimation = {
 const showIfNewState = {
     timeline: [{
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<img src="${jsPsych.timelineVariable('stimuli_path')}" width="25%" />
-    <p>The new name of this treasure is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')])}</b>.</p>`,
+        stimulus: () => `<img src="${jsPsych.evaluateTimelineVariable('stimuli_path')}" width="25%" />
+    <p>The new name of this treasure is <b>${getLastTrialTreasureName(configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')])}</b>.</p>`,
     }],
     choices: ['Continue'],
     conditional_function: () => jsPsych
@@ -1066,13 +1066,13 @@ const showIfNewState = {
 
 const actionSelection = {
     type: jsPsychDragndrop,
-    element: jsPsych.timelineVariable('stimuli_path'),
+    element: () => jsPsych.evaluateTimelineVariable('stimuli_path'),
     show_element_label: true,
-    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.timelineVariable('context')]) + (configs.DEBUGGING ? ` (${configs.BASKETS[findMaxIndex(jsPsych.timelineVariable('bucket_probabilities'))].name})` : ""),
-    buckets: () => jsPsych.timelineVariable('buckets').map((b: { image: string; }) => b.image),
-    bucket_start_angle: jsPsych.timelineVariable('bucket_start_angle'),
+    element_label: () => getLastTrialTreasureName(configs.all_context_state_names[jsPsych.evaluateTimelineVariable('context')]) + (configs.DEBUGGING ? ` (${configs.BASKETS[findMaxIndex(jsPsych.evaluateTimelineVariable('bucket_probabilities'))].name})` : ""),
+    buckets: () => jsPsych.evaluateTimelineVariable('buckets').map((b: { image: string; }) => b.image),
+    bucket_start_angle: jsPsych.evaluateTimelineVariable('bucket_start_angle'),
     show_labels: true,
-    bucket_labels: () => jsPsych.timelineVariable('buckets').map((b: { name: string; }, i: number) => b.name + (configs.DEBUGGING ? ` (${Math.round(jsPsych.timelineVariable('bucket_probabilities')[i]*100)/100})` : "")),
+    bucket_labels: () => jsPsych.evaluateTimelineVariable('buckets').map((b: { name: string; }, i: number) => b.name + (configs.DEBUGGING ? ` (${Math.round(jsPsych.evaluateTimelineVariable('bucket_probabilities')[i]*100)/100})` : "")),
     track_dragging: true,
     randomize_bucket_order: false,
     extensions: [ 
@@ -1110,7 +1110,7 @@ const actionSelection = {
     ],
     data: { my_trial_type: 'dragndrop' },
     on_finish: (data: any) => {
-        const bucket_probs = jsPsych.timelineVariable('bucket_probabilities');
+        const bucket_probs = jsPsych.evaluateTimelineVariable('bucket_probabilities');
         const correct_bucket_index = pickProbabilisticIndex(bucket_probs);
         data.bucket_probs = bucket_probs;
         data.correct_bucket_index = correct_bucket_index;
