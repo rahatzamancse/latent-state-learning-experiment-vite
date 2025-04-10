@@ -1290,7 +1290,7 @@ const stateActionSurvey = {
 
 const prolificFinishTrial = {
     type: jsPsychProlificFinish,
-    code: "CFH86CJA",
+    code: configs.PROLIFIC_CODE,
     data: {
         my_trial_type: 'prolific-finish',
     }

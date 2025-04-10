@@ -1,4 +1,5 @@
 export const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY : "";
+export const PROLIFIC_CODE = import.meta.env.VITE_PROLIFIC_CODE ? import.meta.env.VITE_PROLIFIC_CODE : "";
 export const DEBUGGING = (import.meta.env.VITE_DEBUGGING && import.meta.env.VITE_DEBUGGING === 'true') ? true : false;
 export const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'false') ? false : true;
 export const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'false') ? false : true;
