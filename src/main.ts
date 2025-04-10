@@ -560,7 +560,7 @@ const tutorial_task = {
 // Tutorial start
 const tutorialFixationPoint = {
     type: jsPsychWebgazerValidate,
-    validation_points: [[0, 0]],
+    validation_points: [[-90, -90]],
     validation_point_coordinates: 'center-offset-pixels',
     roi_radius: 100,
     show_validation_data: false,
@@ -993,7 +993,7 @@ const main_game_intro4 = {
 // MARK: Main game Start
 const fixationPoint = {
     type: jsPsychWebgazerValidate,
-    validation_points: [[0, 0]],
+    validation_points: [[-90, -90]],
     validation_point_coordinates: 'center-offset-pixels',
     roi_radius: 100,
     data: { my_trial_type: 'fixation-point' },
