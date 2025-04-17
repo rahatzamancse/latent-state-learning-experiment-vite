@@ -387,6 +387,7 @@ const ObsessiveCompulsiveInventoryQuestionnaire: { name: string, title?: string,
     ]
 }
 
+// @ts-ignore: Unused variable
 const BroaderAutismPhenotypeQuestionnaire: { name: string, title?: string, elements: Question[] } = {
     "name": "BroaderAutismPhenotypeQuestionnaire",
     "elements": [
@@ -607,6 +608,9 @@ const BroaderAutismPhenotypeQuestionnaire: { name: string, title?: string, eleme
     ]
 }
 
+
+
+// @ts-ignore: Unused variable
 const otherScreenerQuestionnaire: { name: string, title?: string, elements: Question[] }[] = [
     {
         "name": "page3",
