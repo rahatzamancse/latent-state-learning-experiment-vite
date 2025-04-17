@@ -28,6 +28,10 @@ import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response
 import { initializeApp } from "firebase/app";
 import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
 
+import { demographicSurvey } from "./questionnaire";
+import '@jspsych/plugin-survey/css/survey.css'
+
+
 // Import the experiment configurations
 import * as configs from "./exp_configs";
 
@@ -1307,6 +1311,8 @@ const outro = {
 const timeline: any[] = [
     ... configs.PROLIFIC ? [prolific_data_trial] : [],
     preload,
+    
+    demographicSurvey,
 
     ...!(configs.DEBUGGING && skip_to >= 0) ? [
         welcome,
