@@ -4,14 +4,28 @@ export const DEBUGGING = (import.meta.env.VITE_DEBUGGING && import.meta.env.VITE
 export const PROLIFIC = (import.meta.env.VITE_PROLIFIC && import.meta.env.VITE_PROLIFIC === 'false') ? false : true;
 export const TRACK_EYE = (import.meta.env.VITE_TRACK_EYE && import.meta.env.VITE_TRACK_EYE === 'false') ? false : true;
 export const UPLOAD_FIRESTORE = (import.meta.env.VITE_UPLOAD_FIRESTORE && import.meta.env.VITE_UPLOAD_FIRESTORE === 'false') ? false : true;
+export const UPLOAD_SUPABASE = (import.meta.env.VITE_UPLOAD_SUPABASE && import.meta.env.VITE_UPLOAD_SUPABASE === 'false') ? false : true;
 export const AUDIO = (import.meta.env.VITE_AUDIO && import.meta.env.VITE_AUDIO === 'false') ? false : true;
 export const DOWNLOAD_AT_END = (import.meta.env.VITE_DOWNLOAD_AT_END && import.meta.env.VITE_DOWNLOAD_AT_END === 'true') ? true : false;
+
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ? import.meta.env.VITE_SUPABASE_URL : "";
+export const SUPABASE_API_KEY = import.meta.env.VITE_SUPABASE_API_KEY ? import.meta.env.VITE_SUPABASE_API_KEY : "";
 
 export const REWARD_PROBABILITY = 1;
 
 if (!import.meta.env.VITE_FIREBASE_API_KEY) {
     console.error("Firebase API key not found. Please set the VITE_FIREBASE_API_KEY environment variable.");
     throw new Error("Firebase API key not found.");
+}
+
+if (!import.meta.env.VITE_SUPABASE_API_KEY) {
+    console.error("Supabase API key not found. Please set the VITE_SUPABASE_API_KEY environment variable.");
+    throw new Error("Supabase API key not found.");
+}
+
+if (!import.meta.env.VITE_SUPABASE_URL) {
+    console.error("Supabase URL not found. Please set the VITE_SUPABASE_URL environment variable.");
+    throw new Error("Supabase URL not found.");
 }
 
 // TODO: Add instruction to keep laptop/camera stable. And How to use it.
@@ -22,6 +36,10 @@ if (UPLOAD_FIRESTORE && FIREBASE_API_KEY === "") {
     throw new Error("Firebase API key not found.");
 }
 
+if (UPLOAD_SUPABASE && SUPABASE_API_KEY === "") {
+    console.error("Supabase API key not found. Please set the VITE_SUPABASE_API_KEY environment variable.");
+    throw new Error("Supabase API key not found.");
+}
 
 // Initialize Firebase
 export const firebaseConfig = {
@@ -31,6 +49,11 @@ export const firebaseConfig = {
     storageBucket: "latent-state-learning.appspot.com",
     messagingSenderId: "926544010648",
     appId: "1:926544010648:web:e6fb2ab9a3bc299ce31fed"
+};
+
+export const supabaseConfig = {
+    url: SUPABASE_URL,
+    anonKey: SUPABASE_API_KEY,
 };
 
 

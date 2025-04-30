@@ -24,9 +24,9 @@ import jsPsychProlificData from './plugins/plugin-save-prolific-data';
 import jsPsychProlificFinish from './plugins/plugin-prolific-completed';
 import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response';
 
-// Initialize the firebase app and the firestore database
-import { initializeApp } from "firebase/app";
-import { getFirestore, updateDoc, collection, doc, setDoc, arrayUnion } from "firebase/firestore";
+// Import DataManagers
+import { FirebaseManager } from '@jspsych-datamanager/firebase';
+import { SupabaseManager } from '@jspsych-datamanager/supabase';
 
 import { demographicSurvey } from "./questionnaire";
 import '@jspsych/plugin-survey/css/survey.css'
@@ -41,26 +41,16 @@ import { getShuffledArray, addObjectInRange, findMaxIndex, createProbabilisticDi
 // Import the styles for the experiment
 import './styles.css';
 
-// Initialize the firestore database with the API key
-const db = configs.UPLOAD_FIRESTORE ? getFirestore(initializeApp(configs.firebaseConfig)) : undefined;
-const docRef = configs.UPLOAD_FIRESTORE ? doc(collection(db!, "experiments")) : undefined;
+// Initialize Firebase if needed
+const firebaseManager = configs.UPLOAD_FIRESTORE ? new FirebaseManager(configs.firebaseConfig) : undefined;
+if (firebaseManager) {
+    firebaseManager.initializeExperiment();
+}
 
-// Firebase charges by the number of reads/writes. To track that per experiments, we use this NUMBER_OF_WRITES variable
-let NUMBER_OF_WRITES = 0;
-// Initialize the experiment document in firestore
-// The document will store the trials, the date, the time, and whether the experiment is running locally
-if (configs.UPLOAD_FIRESTORE) {
-    setDoc(docRef!, {
-        trials: [],
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toISOString().split('T')[1].split('.')[0],
-        local_testing: import.meta.env.VITE_LOCAL_TESTING ? true : false,
-    }).catch(e => {
-        console.error("Error creating document: ", e);
-    }).then(() => {
-        console.log("Document successfully created!");
-        NUMBER_OF_WRITES++;
-    })
+// Initialize Supabase if needed
+const supabaseManager = configs.UPLOAD_SUPABASE ? new SupabaseManager(configs.supabaseConfig) : undefined;
+if (supabaseManager) {
+    supabaseManager.initializeExperiment();
 }
 
 // Initialize Extensions
@@ -102,56 +92,20 @@ const jsPsych = initJsPsych({
     extensions: extensions,
     // After each trial, we push the trial data to firestore
     on_data_update: (data: any) => {
-        // Check if fullscreen.
-        // Note: This is replaced with the fullscreenIfTrial.
-        // const interaction_data = jsPsych.data.getInteractionData()
-        // if (interaction_data.values().slice(lastInteractionDataIndex).some((v: any) => v.event === "fullscreenexit")) {
-        //     jsPsych.abortExperiment("The experiment has ended because you exited fullscreen mode.");
-        // }
-        // lastInteractionDataIndex = interaction_data.values().length;
-
-
-        const trialData = JSON.parse(JSON.stringify(data));
-        // check if trialData has a property 'no_upload' and if it is true
-        if (trialData.no_upload) {
-            delete trialData.no_upload;
-            return trialData;
-        }
-        // Firebase does not support nested arrays, so we need to convert them to a flat js object structure
-        function convertNestedArrays(obj: any) {
-            for (const key in obj) {
-                if (Array.isArray(obj[key])) {
-                    obj[key] = obj[key].reduce((acc: any, val: any, i: number) => {
-                        acc[i] = val;
-                        return acc;
-                    }, {});
-                } else if (typeof obj[key] === "object") {
-                    convertNestedArrays(obj[key]);
-                }
-            }
-        }
-        convertNestedArrays(trialData);
-        // If the experiment is set to upload the data to firestore, we do so
-        if (configs.UPLOAD_FIRESTORE) {
-            updateDoc(docRef!, {
-                trials: arrayUnion(trialData),
-            }).catch(e => { console.error("Error storing Data: ", e) }
-            ).then(() => {
-                console.log("Added trial data: ", trialData);
-                NUMBER_OF_WRITES++;
-            });
-        }
-        // Otherwise we just print the data to the console
-        else {
-            console.log("Dry run: ", trialData);
-        }
-        return trialData;
+        firebaseManager?.createDataUpdateCallback()(data);
+        supabaseManager?.createDataUpdateCallback()(data);
     },
     // After the experiment is finished, we print the number of writes to firestore and download the data as a json file if the user wants to
     on_finish: () => {
-        console.log("Number of writes to Firestore: ", NUMBER_OF_WRITES);
-        if (configs.DOWNLOAD_AT_END)
+        if (firebaseManager) {
+            firebaseManager.createFinishCallback()();
+        }
+        if (supabaseManager) {
+            supabaseManager.createFinishCallback()();
+        }
+        if (configs.DOWNLOAD_AT_END) {
             jsPsych.data.get().localSave('json', 'data.json');
+        }
     },
     on_trial_start: (trial: any) => {
         // trial.inactive_timeout = setTimeout(() => trialTimeOut(trial), INACTIVE_TIMEOUT);
