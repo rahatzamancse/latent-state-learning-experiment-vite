@@ -1,4 +1,3 @@
-// Import the jspsych module
 import { initJsPsych } from 'jspsych';
 
 // Import all the jspsych plugins used in the experiment
@@ -28,8 +27,6 @@ import jsPsychHtmlKeyboardResponse from './plugins/plugin-html-keyboard-response
 import { FirebaseManager } from '@jspsych-datamanager/firebase';
 import { SupabaseManager } from '@jspsych-datamanager/supabase';
 
-import { demographicSurvey } from "./questionnaire";
-import '@jspsych/plugin-survey/css/survey.css'
 
 
 // Import the experiment configurations
