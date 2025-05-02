@@ -1209,7 +1209,7 @@ const context3Procedure = {
         }
     )),
     randomize_order: true,
-    repetitions: 3,
+    repetitions: 4,
     data: { context: 3 },
 }
 
