@@ -1266,7 +1266,7 @@ const timeline: any[] = [
     ... configs.PROLIFIC ? [prolific_data_trial] : [],
     preload,
     
-    demographicSurvey,
+    // demographicSurvey,
 
     ...!(configs.DEBUGGING && skip_to >= 0) ? [
         welcome,

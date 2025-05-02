@@ -2592,10 +2592,10 @@ export const demographicSurvey = {
             CAPE_severity,
             OCI_R,
             BFI_10,
-            C_SSRS,
-            ATTENTION_CHECK,
-            CONDITIONALTEST_severity,
-            PHQ1,
+            // C_SSRS,
+            // ATTENTION_CHECK,
+            // CONDITIONALTEST_severity,
+            // PHQ1,
         ]
     } as SurveyConfig
 };
