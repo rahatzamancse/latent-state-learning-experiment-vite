@@ -11,11 +11,11 @@
   "devDependencies": {
     "@types/ua-parser-js": "^0.7.39",
     "typescript": "^5.8.3",
-    "vite": "^6.3.1"
+    "vite": "^6.3.5"
   },
   "dependencies": {
     "@jspsych-datamanager/core": "^1.0.0",
-    "@jspsych-datamanager/firebase": "^1.0.0",
+    "@jspsych-datamanager/firebase": "^1.0.2",
     "@jspsych-datamanager/supabase": "^1.0.0",
     "@jspsych/extension-mouse-tracking": "^1.2.0",
     "@jspsych/extension-webgazer": "^1.2.0",
@@ -34,7 +34,7 @@
     "@jspsych/plugin-webgazer-init-camera": "^2.1.0",
     "@jspsych/plugin-webgazer-validate": "^2.1.0",
     "@supabase/supabase-js": "^2.49.4",
-    "firebase": "^11.6.0",
+    "firebase": "^11.7.1",
     "jspsych": "^8.2.1"
   }
 }
