@@ -89,16 +89,32 @@ const jsPsych = initJsPsych({
     extensions: extensions,
     // After each trial, we push the trial data to firestore
     on_data_update: (data: any) => {
-        firebaseManager?.createDataUpdateCallback()(data);
-        supabaseManager?.createDataUpdateCallback()(data);
+        try {
+            firebaseManager?.createDataUpdateCallback()(data);
+        } catch (e) {
+            console.error(e);
+        }
+        try {
+            supabaseManager?.createDataUpdateCallback()(data);
+        } catch (e) {
+            console.error(e);
+        }
     },
     // After the experiment is finished, we print the number of writes to firestore and download the data as a json file if the user wants to
     on_finish: () => {
         if (firebaseManager) {
-            firebaseManager.createFinishCallback()();
+            try {
+                firebaseManager.createFinishCallback()();
+            } catch (e) {
+                console.error(e);
+            }
         }
         if (supabaseManager) {
-            supabaseManager.createFinishCallback()();
+            try {
+                supabaseManager.createFinishCallback()();
+            } catch (e) {
+                console.error(e);
+            }
         }
         if (configs.DOWNLOAD_AT_END) {
             jsPsych.data.get().localSave('json', 'data.json');
